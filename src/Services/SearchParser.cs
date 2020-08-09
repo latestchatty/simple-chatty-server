@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
-using SimpleChattyServer.Services;
 
-namespace SimpleChattyServer.Parsers
+namespace SimpleChattyServer.Services
 {
     public sealed class SearchParser
     {

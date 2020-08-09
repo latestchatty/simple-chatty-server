@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SimpleChattyServer.Options;
-using SimpleChattyServer.Parsers;
 using SimpleChattyServer.Services;
 
 namespace SimpleChattyServer
@@ -22,11 +21,13 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
+            services.AddSingleton<ChattyAccess>();
             services.AddSingleton<ChattyParser>();
-            services.AddSingleton<EmojiConverter>();
-            services.AddSingleton<ThreadParser>();
             services.AddSingleton<DownloadService>();
+            services.AddSingleton<EmojiConverter>();
             services.AddHostedService<ScrapeService>();
+            services.AddSingleton<SearchParser>();
+            services.AddSingleton<ThreadParser>();
             services.AddControllers();
         }
 

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
-using SimpleChattyServer.Services;
+using SimpleChattyServer.Exceptions;
 
-namespace SimpleChattyServer.Parsers
+namespace SimpleChattyServer.Services
 {
     public sealed class ChattyParser
     {
@@ -66,7 +66,7 @@ namespace SimpleChattyServer.Parsers
                 chattyPage.Threads.Add(thread);
 
                 if (chattyPage.Threads.Count > 40)
-                    throw new Exception("Too many threads. Something is wrong.");
+                    throw new ParsingException("Too many threads. Something is wrong.");
             }
 
             return chattyPage;

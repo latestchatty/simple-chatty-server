@@ -1,6 +1,6 @@
 using System;
 
-namespace SimpleChattyServer.Parsers
+namespace SimpleChattyServer.Services
 {
     public sealed class Parser
     {

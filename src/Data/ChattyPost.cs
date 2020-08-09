@@ -12,6 +12,5 @@ namespace SimpleChattyServer.Data
         public string Body { get; set; }
         public string Preview { get; set; }
         public DateTimeOffset Date { get; set; }
-        public List<ChattyPost> Replies { get; set; }
     }
 }

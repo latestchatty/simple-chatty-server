@@ -16,15 +16,10 @@
   - [GET /v2/getChatty](#get-v2getchatty)
   - [GET /v2/getChattyRootPosts](#get-v2getchattyrootposts)
   - [GET /v2/getThread](#get-v2getthread)
-  - [GET /v2/getThreadPostIds](#get-v2getthreadpostids)
   - [GET /v2/getThreadPostCount](#get-v2getthreadpostcount)
-  - [GET /v2/getSubthread](#get-v2getsubthread)
 - [Posts](#posts)
   - [GET /v2/getNewestPostInfo](#get-v2getnewestpostinfo)
   - [GET /v2/getPost](#get-v2getpost)
-  - [GET /v2/getPostRange](#get-v2getpostrange)
-  - [GET /v2/getParentId](#get-v2getparentid)
-  - [GET /v2/getPostLineage](#get-v2getpostlineage)
   - [POST /v2/postComment](#post-v2postcomment)
   - [GET /v2/search](#get-v2search)
   - [POST /v2/requestReindex](#post-v2requestreindex)
@@ -33,12 +28,9 @@
   - [GET /v2/getNewestEventId](#get-v2getnewesteventid)
   - [GET /v2/waitForEvent](#get-v2waitforevent)
   - [GET /v2/pollForEvent](#get-v2pollforevent)
-  - [POST /v2/broadcastServerMessage](#post-v2broadcastservermessage)
 - [Users](#users)
   - [GET /v2/checkConnection](#get-v2checkconnection)
   - [POST /v2/verifyCredentials](#post-v2verifycredentials)
-  - [GET /v2/getUserRegistrationDate](#get-v2getuserregistrationdate)
-  - [GET /v2/getAllUserRegistrationDates](#get-v2getalluserregistrationdates)
   - [GET /v2/getAllTenYearUsers](#get-v2getalltenyearusers)
 - [Messages](#messages)
   - [POST /v2/getMessages](#post-v2getmessages)
@@ -54,14 +46,6 @@
   - [POST /v2/clientData/markPost](#post-v2clientdatamarkpost)
   - [GET /v2/clientData/getClientData](#get-v2clientdatagetclientdata)
   - [POST /v2/clientData/setClientData](#post-v2clientdatasetclientdata)
-- [Notifications](#notifications)
-  - [GET /v2/notifications/generateId](#get-v2notificationsgenerateid)
-  - [POST /v2/notifications/registerNotifierClient](#post-v2notificationsregisternotifierclient)
-  - [POST /v2/notifications/registerRichClient](#post-v2notificationsregisterrichclient)
-  - [POST /v2/notifications/detachAccount](#post-v2notificationsdetachaccount)
-  - [POST /v2/notifications/waitForNotification](#post-v2notificationswaitfornotification)
-  - [POST /v2/notifications/getUserSetup](#post-v2notificationsgetusersetup)
-  - [POST /v2/notifications/setUserSetup](#post-v2notificationssetusersetup)
 - [Legacy v1 API](#legacy-v1-api)
   - [Data Types (v1)](#data-types-v1)
   - [Error Responses (v1)](#error-responses-v1)
@@ -83,25 +67,10 @@
 ## Introduction
 This documents the WebChatty API, a backend web service for a chatty-style forum.
 
-This API implements versions 1 and 2 of the WinChatty API, allowing it to support preexisting clients of that API.
+This API implements a subset of versions 1 and 2 of the WinChatty API, allowing it to support preexisting clients of that API.
 
 ### Protocols
-Client applications should be configured to use GZIP compression and verify SSL certificates.  These are both very important, but GZIP compression especially so.  On average GZIP cuts the size of responses down by 75%.  Try calling [/v2/checkConnection](#get-v2checkconnection) to verify that you are correctly using GZIP and SSL.
-
-> **libcurl**   
-> Use [curl_setopt()](http://www.php.net/curl_setopt) to set:   
-> `CURLOPT_SSL_VERIFYPEER` = `true`   
-> `CURLOPT_SSL_VERIFYHOST` = `2`   
-> `CURLOPT_ENCODING` = `"gzip"`
-
-> **WinInet**   
-> Call [HttpOpenRequest()](http://msdn.microsoft.com/en-us/library/windows/desktop/aa384233(v=vs.85).aspx) using the flag `INTERNET_FLAG_SECURE`.  Then call [InternetSetOption()](http://msdn.microsoft.com/en-us/library/windows/desktop/aa385114(v=vs.85).aspx) using the flag `INTERNET_OPTION_HTTP_DECODING`.
-
-> **.NET**   
-> [WebClient](http://msdn.microsoft.com/en-us/library/system.net.webclient(v=vs.110).aspx) automatically verifies SSL certificates, but you must override [GetWebRequest()](http://msdn.microsoft.com/en-us/library/system.net.webclient.getwebrequest(v=vs.110).aspx) in order to support GZIP compression (see [this StackOverflow answer](http://stackoverflow.com/a/4914874) for the code).  [WebException](http://msdn.microsoft.com/en-us/library/system.net.webexception(v=vs.110).aspx) is thrown if the certificate is invalid.
-
-> **iOS / OS X**   
-> Based on some quick Google searches, I think [NSURLConnection](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSURLConnection_Class/Reference/Reference.html) verifies SSL certificates by default and blows up in some way if the certificate is invalid.  I think you have to add the "Accept-Encoding" header in order to support GZIP compression (see [this StackOverflow answer](http://stackoverflow.com/a/2683986) for the code).
+Client applications should be configured to use GZIP compression.  On average GZIP cuts the size of responses down by 75%.  Try calling [/v2/checkConnection](#get-v2checkconnection) to verify that you are correctly using GZIP.
 
 The v2 API uses neither cookies nor HTTP authentication.  Usernames and passwords, when applicable, are passed via POST arguments.  It is highly recommended that HTTPS be used so that usernames and passwords are not transmitted in plain text.  You may wish to use HTTP for requests where passwords are not transmitted; in mobile clients on cellular networks, the SSL handshaking can add a significant amount of latency.
 
@@ -175,7 +144,6 @@ Type | Description
 `[E_TYPE]` - Event action type enum.  One of the following strings:
 >- `"newPost"` - data will be `[E_NEWP]`
 >- `"categoryChange"` - data will be `[E_CATC]`
->- `"serverMessage"` - data will be `[E_SMSG]`
 >- `"lolCountsUpdate"` - data will be `[E_LOLS]`
 
 `[E_DATA]` - Event-specific data.  Abstract base type which may be any one of the following concrete types:
@@ -258,7 +226,7 @@ Call [/v2/pollForEvent](#get-v2pollforevent), passing the last event ID (either 
 When your event loop retrieves a new event:
 - For a new post, insert the post into your copy of the chatty.
 - For a category change to "nuked", remove the post and all of its children from your copy of the chatty.
-- For a category change to anything else, update the existing post in your copy of the chatty.  If the post does not exist in your copy of the chatty, then it must have been previously nuked and now has been reinstated.  Call [/v2/getSubthread](#get-v2getsubthread) to get the subthread rooted at this post, and insert all of the posts into your copy of the chatty.
+- For a category change to anything else, update the existing post in your copy of the chatty.  If the post does not exist in your copy of the chatty, then it must have been previously nuked and now has been reinstated.  Call [/v2/getThread](#get-v2getthread) to get the subthread rooted at this post, and insert all of the posts into your copy of the chatty.
 - For a server message, show a message box to the user with the specified administrator message.
 
 When the user changes a client option:
@@ -338,30 +306,6 @@ Response:
 }
 ```
 
-### GET /v2/getThreadPostIds
-Gets the ID of each post in one or more threads.  If an invalid ID is passed (or if the ID of a nuked post is passed), then that thread will be silently omitted from the resulting list of threads.
-
-Parameters:
-- `id=[INT+,50]` - One or more IDs.  May be any post in the thread, not just the OP.
-
-Response:
-```
-{
-   "threads":
-   [
-      {
-         "threadId": [INT],
-         "postIds":
-         [
-            [INT],
-            ...  // one for each post in the thread
-         ]
-      },
-      ...  // one for each thread
-   ]
-}
-```
-
 ### GET /v2/getThreadPostCount
 Gets the number of posts in one or more threads, including the root post (i.e. the post count is always at least 1).
 
@@ -378,26 +322,6 @@ Response:
          "postCount": [INT]
       },
       ...  // one for each thread
-   ]
-}
-```
-
-### GET /v2/getSubthread
-Gets all of the posts in one or more subthreads.  A subthread is a post (which may or may not be a thread OP) and its descendants.  If an invalid ID is passed (or if the ID of a nuked post is passed), then that thread will be silently omitted from the resulting list of subthreads.
-
-Parameters:
-- `id=[INT+,50]` - One or more IDs.  The subthreads rooted at these IDs are returned.
-
-Response:
-```
-{
-   "subthreads":
-   [
-      {
-         "subthreadId": [INT],
-         "posts": [POSTS]
-      },
-      ...  // one for each subthread
    ]
 }
 ```
@@ -429,61 +353,6 @@ Response:
 ```
 {
    "posts": [POSTS]
-}
-```
-
-### GET /v2/getPostRange
-Gets a consecutive range of posts.  If any posts in the range do not exist (i.e. nuked, or hasn't been posted yet), then they are silently omitted from the list of posts in the response, rather than raising an error.  The nuked posts are not counted against the number of posts requested by the count argument.
-
-Parameters:
-- `startId=[INT]` - The starting ID.  This ID is included in the range.
-- `count=[INT,1000]` - Maximum number of posts to return, including startId.
-- `reverse=[BIT?]` - If true, then post IDs ≤ startId are retrieved.  If not specified, or false, then post IDs ≥ startId are retrieved.
-
-Response:
-```
-{
-   "posts": [POSTS]
-}
-```
-
-### GET /v2/getParentId
-Gets the parent IDs for one or more posts.  If a post does not exist, then it is silently omitted from the list of relationships in the response, rather than raising an error.  If a post is the OP of a thread, then the ID 0 is returned.
-
-Parameters:
-- `id=[INT+,50]` - List of post IDs.  The parent ID of each one will be returned.
-
-Response:
-```
-{
-   "relationships":
-   [
-      {
-         "childId": [INT],
-         "parentId": [INT]
-      },
-      ...  // one for each ID
-   ]
-}
-```
-
-### GET /v2/getPostLineage
-Get the parent, parent's parent, parent's parent's parent, etc. for one or more posts.
-
-Parameters:
-- `id=[INT+,50]` - One or more post IDs for which to get parent chains ("lineages").  If an ID does not exist or is nuked, then the chain is silently omitted from the result list.
-
-Response:
-```
-{
-   "posts":
-   [
-      {
-         "postId": [INT],
-         "lineage": [POSTS]  // newest first
-      },
-      ...  // one for each post
-   ]
 }
 ```
 
@@ -568,14 +437,14 @@ Errors:
 Events allow the server to inform the client of any changes that are made, which the client would need to know to keep its local copy of the chatty up to date.  The following list describes all of the event types:
 - `"newPost"` – A new post has been added.
 - `"categoryChange"` – The category of an existing post has been modified.
-- `"serverMessage"` – The server administrator wants to display a message to all connected users.
+- `"lolCountsUpdate"` - LOL counts changed.
 
 The category change event encompasses the following three things that may happen to a post after it is initially made:
 - The post may be nuked (removed from the chatty).
 - If the post was previously nuked, then it may be unnuked (reinstated in the chatty).
 - The post may be flagged with a moderation category like "informative".
 
-All three events are considered a change to the post's category.  To make this work, the standard set of categories (ontopic, nws, stupid, political, tangent, informative) is augmented with the special flag "nuked".  This gives us a nice way to represent nukes, unnukes, and flags the same way: as a change to the post category.
+These are considered a change to the post's category.  To make this work, the standard set of categories (ontopic, nws, stupid, political, tangent, informative) is augmented with the special flag "nuked".  This gives us a nice way to represent nukes, unnukes, and flags the same way: as a change to the post category.
 
 ### GET /v2/getNewestEventId
 Gets the most recent event in the database.
@@ -630,24 +499,6 @@ Response:
 Errors:
 - `ERR_TOO_MANY_EVENTS`
 
-### POST /v2/broadcastServerMessage
-Administrator-only method to broadcast a server message to all connected users.
-
-Parameters:
-- `username=[STR]` - Administrator username.
-- `password=[STR]` - Administrator password.
-- `message=[STR]` - Server message.
-
-Response:
-```
-{
-   "result": "success"
-}
-```
-
-Errors:
-- `ERR_INVALID_LOGIN`
-
 ## Users
 These API calls pertain to user accounts.
 
@@ -683,48 +534,8 @@ Response:
 }
 ```
 
-### GET /v2/getUserRegistrationDate
-Gets the registration date for one or more users.  If a username does not exist or the user does not have a registration date available, then the user is silently omitted from the result array.
-
-Parameters:
-- `username=[STR+,50]` - List of Usernames.
-
-Response:
-```
-{
-   "users":
-   [
-      {
-         "username": [STR],
-         "date": [DAT]
-      },
-      ...  // one for each user
-   ]
-}
-```
-
-### GET /v2/getAllUserRegistrationDates
-Gets a bulk dump of registration dates for all users.
-
-Parameters:
-- None.
-
-Response:
-```
-{
-   "users":
-   [
-      {
-         "username": [STR],
-         "date": [DAT]
-      },
-      ...  // one for each user
-   ]
-}
-```
-
 ### GET /v2/getAllTenYearUsers
-Gets a bulk list of all users who have been on the site for more than ten years.  On the site, these users are shown with a lightning bolt.  This is not guaranteed to be a fully comprehensive list (to give the implementation some wiggle room).
+**Deprecated.** This backwards-compatibility stub always returns an empty list.
 
 Parameters:
 - None.
@@ -732,11 +543,7 @@ Parameters:
 Response:
 ```
 {
-   "users":
-   [
-      [STR],
-      ...  // one for each user
-   ]
+   "users": []
 }
 ```
 
@@ -979,166 +786,6 @@ Response
    "result": "success"
 }
 ```
-
-## Notifications
-There are three paths for implementing notifications, described below.
-
-- Simple desktop notifier clients, which receive notifications via long-polling and use web-based login:
-  - Upon installation (or upon demand), generate a GUID to represent that client installation and save it forever.
-  - Call /v2/notifications/registerNotifierClient at startup.
-  - Call /v2/notifications/waitForNotification in a loop.  If ERR_CLIENT_NOT_ASSOCIATED is returned, then open /v2/notifications/ui/login?clientId=(_____) in the browser, inserting the client GUID into the query string.  Wait for the user to finish logging in, which associates the account, then continue to loop.
-- Rich desktop clients, which receive notifications via long-polling and use their own login:
-  - Upon installation (or upon demand), generate a GUID to represent that client installation and save it forever.
-  - Call /v2/notifications/registerRichClient when the user enables notifications.
-  - Call /v2/notifications/waitForNotification in a loop.  If an error is returned, then stop looping and display the error.
-  - Call /v2/notifications/detachAccount when the user disables notifications.
-- (Not yet implemented) Rich iOS clients, which receive notifications via APNS and use their own login:
-  - Upon installation (or upon demand), generate a GUID to represent that client installation and save it forever.
-  - Call /v2/notifications/registerRichClient when the user enables notifications, passing the iOS device token.
-  - The server will push notifications to the client.
-  - Call /v2/notifications/detachAccount when the user disables notifications.
-
-In order to configure the user's notifications, there are two options:
-- Web-based interface at /v2/notifications/ui/configure - Very easy to implement and provides full functionality, but cannot be customized in any way.  Simply point the user's browser at that page.
-- Custom native interface – More work, requiring the use of additional API calls, but permits maximum control over the user experience.
-
-### GET /v2/notifications/generateId
-Generates a GUID.  This is provided as a convenience for clients on platforms where GUIDs are not commonplace.  Windows-based clients may produce a GUID locally using standard Windows methods rather than calling this API.
-
-Parameters:
-- None.
-
-Response:
-```
-{
-   "id": [STR]
-}
-```
-
-### POST /v2/notifications/registerNotifierClient
-Registers a brand new installation of a simple notifier client.  This only needs to be done once.  The  notifier app must generate a GUID to use as its ID.  This GUID will uniquely identify this installation of the application and is how the notification server identifies recipients.  If the client is already registered, then no action is taken and success is returned.  This allows very simple clients to register themselves at every launch.  (Just remember to save that GUID somewhere safe on the computer so each launch can use the same GUID.)
-
-After the client has been registered, it needs to be attached to a site account.  When using this method to register the client, the client must open the web browser to the following URL to present the user with an attachment and setup interface:
-
-https://example.com/v2/notifications/ui/login?clientId={0}
-
-{0} should be replaced with the client's GUID in the above URL.  Once the account is attached, the notifier may begin calling waitForNotification to listen for notifications.  waitForNotification will return an error if the client is not attached to an account.
-
-Parameters:
-- `id=[STR]` - 36-character GUID, generated fresh by the client.  The client must save and reuse this GUID every time it interacts with the notifications API, otherwise it will be seen as a separate client installation.
-- `name=[STR]` - User-recognizable name of this installation.  Typically this should include the computer name, the operating system, and the name of the application.
-
-Response:
-```
-{
-   "result": "success"
-}
-```
-
-### POST /v2/notifications/registerRichClient
-Registers a brand new installation of a rich notifier client.  This only needs to be done once.  If the user logs into a different account, this call may be re-issued to reattach the client to the new account.  It is not necessary to call detachAccount first in that scenario.
-
-After the client is registered, it is immediately attached to the given site account.  Desktop clients may begin calling waitForNotification to listen for notifications as soon as this call returns.  Mobile clients will begin receiving push notifications.
-
-Parameters:
-- `id=[STR]` - 36-character GUID, generated fresh by the client.  The client must use this GUID every time it interacts with the notifications API, otherwise it will be seen as a separate client installation.
-- `name=[STR]` - User-recognizable name of this installation.  Typically this should include the computer name, the operating system, and the name of the application.
-- `username=[STR]` - Username.
-- `password=[STR]` - Password.
-
-Response:
-```
-{
-   "result": "success"
-}
-```
-
-Errors:
-- `ERR_INVALID_LOGIN`
-
-### POST /v2/notifications/detachAccount
-Detaches the client from the given site account.  The client will no longer receive notifications for this user.
-
-Parameters:
-- `clientId=[STR]` - Client GUID.
-- `username=[STR]` - Username.
-- `password=[STR]` - Password.
-
-Response:
-```
-{
-   "result": "success"
-}
-```
-
-Errors:
-- `ERR_UNKNOWN_CLIENT_ID`
-- `ERR_INVALID_LOGIN`
-
-### POST /v2/notifications/waitForNotification
-Block until a new notification is ready, or until an internal timeout expires.  In the latter case, zero messages will be returned in the response.
-
-Parameters:
-- `clientId=[STR]` - Client GUID.
-
-Response:
-```
-{
-   "messages":
-   [
-      {
-         "subject": [STR],
-         "body": [STR],
-         "postId": [INT],
-         "threadId": [INT]
-      },
-      ...
-   ]
-}
-```
-
-Errors:
-- `ERR_UNKNOWN_CLIENT_ID`
-- `ERR_CLIENT_NOT_ASSOCIATED`
-
-### POST /v2/notifications/getUserSetup
-Retrieves the user's notification setup.
-
-Parameters:
-- `username=[STR]` - Username.
-- `password=[STR]` - Password.
-
-Response:
-```
-{
-   "triggerOnReply": [BIT],
-   "triggerOnMention": [BIT],
-   "triggerKeywords": [STR*]
-}
-```
-
-Errors:
-- `ERR_INVALID_LOGIN`
-
-### POST /v2/notifications/setUserSetup
-Overwrites the user's notification setup.  This affects all clients attached to the user's account.
-
-Parameters:
-- `username=[STR]` - Username.
-- `password=[STR]` - Password.
-- `triggerOnReply=[BIT]` - Whether to send a notification for replies to the user's posts.
-- `triggerOnMention=[BIT]` - Whether to send a notification when the user's name is mentioned.
-- `triggerKeywords=[STR*]` - List of post keywords for which to send notifications.
-
-Response:
-```
-{
-   "result": "success"
-}
-```
-
-Errors:
-- `ERR_INVALID_LOGIN`
 
 ## Legacy v1 API
 This API exists only to support [Latest Chatty](https://itunes.apple.com/us/app/latest-chatty/id287316743?mt=8) on iOS.  Do not use it in new applications.

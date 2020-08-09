@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
-using SimpleChattyServer.Services;
+using SimpleChattyServer.Exceptions;
 
-namespace SimpleChattyServer.Parsers
+namespace SimpleChattyServer.Services
 {
     public sealed class ThreadParser
     {
@@ -37,16 +37,16 @@ namespace SimpleChattyServer.Parsers
 
             var contentTypeId = int.Parse(contentTypeIdStr.ToString());
             if (contentTypeId != 2 && contentTypeId != 17)
-                throw new Exception($"This post is not in the main chatty. {contentTypeId}");
+                throw new MissingThreadException($"This post is not in the main chatty. Content type ID: {contentTypeId}");
         }
 
-        public async Task<ChattyThread> GetThread(int threadId)
+        public async Task<ChattyThread> GetThread(int id)
         {
-            // threadID might be a reply ID instead of a root thread ID. GetThreadTree() can handle it.
-            var tree = await GetThreadTree(threadId);
+            // id might be a reply ID instead of a root thread ID. GetThreadTree() can handle it.
+            var tree = await GetThreadTree(id);
 
             // From tree we can grab the real root thread ID.
-            threadId = tree.Posts[0].Id;
+            var threadId = tree.Posts[0].Id;
 
             // Add the bodies to the tree.
             var bodies = (await GetThreadBodies(threadId)).ToDictionary(x => x.Id);
@@ -62,13 +62,14 @@ namespace SimpleChattyServer.Parsers
             return tree;
         }
 
+        // if the ID doesn't exist, the returned list will be empty
         public async Task<List<ChattyPost>> GetThreadBodies(int threadId)
         {
             var url = $"https://www.shacknews.com/frame_laryn.x?root={threadId}";
             var html = await _downloadService.DownloadWithSharedLogin(url, verifyLoginStatus: false);
 
             if (!html.Contains("</html>"))
-                throw new Exception("");
+                throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
             var p = new Parser(html);
             var list = new List<ChattyPost>();
@@ -103,10 +104,10 @@ namespace SimpleChattyServer.Parsers
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
             if (!html.Contains("</html>"))
-                throw new Exception("Shacknews thread tree HTML ended prematurely.");
+                throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
             if (html.Contains("<p class=\"be_first_to_comment\">"))
-                throw new Exception("This post is in the future.");
+                throw new MissingThreadException("This post is in the future.");
 
             CheckContentId(html);
 
@@ -118,6 +119,9 @@ namespace SimpleChattyServer.Parsers
 
         public ChattyThread ParseThreadTree(Parser p, bool stopAtFullPost = true)
         {
+            if (p.Peek(1, "<div class=\"postbody\">") == -1)
+                throw new MissingThreadException($"Thread does not exist.");
+
             var list = new List<ChattyPost>();
             var rootBody = MakeSpoilersClickable(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
