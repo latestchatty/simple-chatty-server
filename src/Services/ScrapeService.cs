@@ -15,15 +15,20 @@ namespace SimpleChattyServer.Services
         private readonly ILogger _logger;
         private readonly ChattyParser _chattyParser;
         private readonly ThreadParser _threadParser;
+        private readonly LolParser _lolParser;
+        private readonly DownloadService _downloadService;
+        private readonly ChattyAccess _chattyAccess;
         private readonly Timer _timer;
 
-        public Chatty Chatty { get; private set; }
-
-        public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser)
+        public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
+            LolParser lolParser, DownloadService downloadService, ChattyAccess chattyAccess)
         {
             _logger = logger;
             _chattyParser = chattyParser;
             _threadParser = threadParser;
+            _lolParser = lolParser;
+            _downloadService = downloadService;
+            _chattyAccess = chattyAccess;
             _timer = new Timer(Scrape, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
@@ -60,14 +65,16 @@ namespace SimpleChattyServer.Services
                 var newChatty = await GetChattyWithoutBodies();
 
                 List<int> threadIdsWithMissingPostBodies;
-                if (Chatty == null)
+                if (_chattyAccess.Chatty == null)
                     threadIdsWithMissingPostBodies = newChatty.ThreadsByRootId.Keys.ToList();
                 else
-                    CopyPostBodies(Chatty, newChatty, out threadIdsWithMissingPostBodies);
+                    CopyPostBodies(_chattyAccess.Chatty, newChatty, out threadIdsWithMissingPostBodies);
 
                 await DownloadPostBodies(newChatty, threadIdsWithMissingPostBodies);
 
-                Chatty = newChatty;
+                var lolCounts = await _lolParser.DownloadChattyLolCounts();
+
+                _chattyAccess.Update(newChatty, lolCounts);
 
                 _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}");
             }

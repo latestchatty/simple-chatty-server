@@ -25,15 +25,16 @@ namespace SimpleChattyServer.Services
             _utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         }
 
-        public async Task<string> DownloadWithSharedLogin(string url, bool verifyLoginStatus = true)
+        public async Task<string> DownloadWithSharedLogin(string url, bool verifyLoginStatus = true,
+            string postBody = null)
         {
-            var html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus);
+            var html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody);
             if (html != null)
                 return html;
 
             await LogIntoSharedAccount();
 
-            html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus);
+            html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody);
             if (html != null)
                 return html;
 
@@ -82,12 +83,17 @@ namespace SimpleChattyServer.Services
             return await reader.ReadToEndAsync();
         }
 
-        private async Task<string> DownloadWithExistingSharedLoginCookies(string url, bool verifyLoginStatus)
+        private async Task<string> DownloadWithExistingSharedLoginCookies(string url, bool verifyLoginStatus,
+            string postBody)
         {
             if (_sharedLoginCookies == null)
                 return null; // haven't logged in at all yet
 
-            var request = CreateRequest(url, _sharedLoginCookies);
+            var request = CreateRequest(url, _sharedLoginCookies, method: postBody == null ? "GET" : "POST");
+
+            if (postBody != null)
+                await WriteRequestBody(request, postBody);
+
             var html = await GetResponse(request);
 
             if (!verifyLoginStatus || html.Contains("<li style=\"display: none\" id=\"user_posts\">"))
