@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
-    public sealed class ModerationFlagConverter : JsonConverter<ModerationFlag>
+    public sealed class V2ModerationFlagConverter : JsonConverter<ModerationFlag>
     {
         public override ModerationFlag Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
             Parse(reader.GetString());

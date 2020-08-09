@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
-    public sealed class DateTimeOffsetConverter : JsonConverter<DateTimeOffset>
+    public sealed class V2DateTimeOffsetConverter : JsonConverter<DateTimeOffset>
     {
         public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
             DateTimeOffset.Parse(reader.GetString());

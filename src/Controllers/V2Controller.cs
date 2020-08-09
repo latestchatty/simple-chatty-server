@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Responses;
 using SimpleChattyServer.Services;
@@ -41,7 +38,31 @@ namespace SimpleChattyServer.Controllers
         private static List<PostModel> CreatePostModelList(ChattyThread thread, ThreadLolCounts lolCounts)
         {
             var list = new List<PostModel>(thread.Posts.Count);
-            throw new NotImplementedException(); //TODO
+            var maxDepth = thread.Posts.Max(x => x.Depth);
+            var lastIdAtDepth = new int[maxDepth + 1];
+
+            foreach (var post in thread.Posts)
+            {
+                lastIdAtDepth[post.Depth] = post.Id;
+                list.Add(
+                    new PostModel
+                    {
+                        Id = post.Id,
+                        ThreadId = thread.ThreadId,
+                        ParentId = post.Depth == 0 ? 0 : lastIdAtDepth[post.Depth - 1],
+                        Author = post.Author,
+                        Category = V2ModerationFlagConverter.Parse(post.Category),
+                        Date = post.Date,
+                        Body = post.Body,
+                        Lols =
+                            lolCounts.CountsByPostId.TryGetValue(post.Id, out var postLols)
+                            ? postLols
+                            : new List<LolModel>()
+                    }
+                );
+            }
+
+            return list;
         }
     }
 }

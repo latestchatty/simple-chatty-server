@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
@@ -11,9 +12,9 @@ namespace SimpleChattyServer.Data
         public sealed class RootPost
         {
             public int Id { get; set; }
-            public DateTimeOffset Date { get; set; }
+            [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
             public string Author { get; set; }
-            public ModerationFlag Category { get; set; }
+            [JsonConverter(typeof(V2ModerationFlagConverter))] public ModerationFlag Category { get; set; }
             public string Body { get; set; }
             public int PostCount { get; set; }
             public bool IsParticipant { get; set; }

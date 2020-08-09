@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using SimpleChattyServer.Data;
 
 namespace SimpleChattyServer.Responses
@@ -10,7 +11,7 @@ namespace SimpleChattyServer.Responses
         public sealed class MarkedPost
         {
             public int Id { get; set; }
-            public MarkedPostType Type { get; set; }
+            [JsonConverter(typeof(MarkedPostTypeConverter))] public MarkedPostType Type { get; set; }
         }
     }
 }

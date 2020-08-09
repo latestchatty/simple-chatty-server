@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using SimpleChattyServer.Data;
 
 namespace SimpleChattyServer.Responses
 {
@@ -10,7 +12,7 @@ namespace SimpleChattyServer.Responses
         public sealed class User
         {
             public string Username { get; set; }
-            public DateTimeOffset Date { get; set; }
+            [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
         }
     }
 }

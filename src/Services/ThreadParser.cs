@@ -86,10 +86,10 @@ namespace SimpleChattyServer.Services
                 reply.Author = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
-                reply.Body = MakeSpoilersClickable(p.Clip(
-                    new[] { "<div class=\"postdate\">", ">" },
-                    "</div>"));
-                reply.Date = DateTimeOffset.Parse(StripTags(p.Clip(
+                reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
+                    new[] { "<div class=\"postbody\">", ">" },
+                    "</div>"))));
+                reply.Date = ParseDate(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
                     "T</div")) + "T");
                 list.Add(reply);
@@ -123,10 +123,10 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
-            var rootBody = MakeSpoilersClickable(p.Clip(
+            var rootBody = MakeSpoilersClickable(WebUtility.HtmlDecode(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
-                "</div>").Trim());
-            var rootDate = DateTimeOffset.Parse(StripTags(p.Clip(
+                "</div>").Trim()));
+            var rootDate = ParseDate(StripTags(p.Clip(
                 new[] { "<div class=\"postdate\">", ">" },
                 "T</div")) + "T");
 
@@ -155,9 +155,9 @@ namespace SimpleChattyServer.Services
                 reply.Id = int.Parse(p.Clip(
                     new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" },
                     "\""));
-                reply.Preview = RemoveSpoilers(CollapseWhitespace(p.Clip(
+                reply.Preview = RemoveSpoilers(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"oneline_body\">", ">" },
-                    "</span> : </a><span class=\"oneline_user \"")).Trim());
+                    "</span> : </a><span class=\"oneline_user \""))).Trim());
                 reply.Author = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"oneline_user", ">" },
                     "</span>"));
@@ -242,12 +242,12 @@ namespace SimpleChattyServer.Services
                 }
                 else if (inSpoiler)
                 {
-                    if (chunk.Substring(0, spanLen) == span)
+                    if (chunk.Length >= spanLen && chunk.Substring(0, spanLen) == span)
                     {
                         // Nested Shacktag.
                         depth++;
                     }
-                    else if (chunk.Substring(0, endSpanLen) == endSpan)
+                    else if (chunk.Length >= endSpanLen && chunk.Substring(0, endSpanLen) == endSpan)
                     {
                         // End of a Shacktag.
                         depth--;
@@ -263,7 +263,7 @@ namespace SimpleChattyServer.Services
                 }
                 else
                 {
-                    if (chunk.Substring(0, spoilerSpanLen) == spoilerSpan)
+                    if (chunk.Length >= spoilerSpanLen && chunk.Substring(0, spoilerSpanLen) == spoilerSpan)
                     {
                         // Beginning of a spoiler.
                         inSpoiler = true;
@@ -299,13 +299,22 @@ namespace SimpleChattyServer.Services
         {
             str =
                 str
-                .Replace("\n", " ")
-                .Replace("\t", " ")
-                .Replace("\r", " ");
+                .Replace("\n", "")
+                .Replace("\t", "")
+                .Replace("\r", "");
 
             str = StrReplaceAll("  ", " ", str);
 
             return str;
+        }
+
+        private static DateTimeOffset ParseDate(string str)
+        {
+            // like "Aug 09, 2020 9:33am PDT"
+            var timeZoneAbbreviation = str.Substring(str.Length - 3);
+            var timeZoneOffset = PacificTimeZone.GetOffsetFromAbbreviation(timeZoneAbbreviation);
+            var reformattedDate = str.Substring(0, str.Length - 3) + $"{timeZoneOffset.Hours}:00";
+            return DateTimeOffset.Parse(reformattedDate);
         }
     }
 }

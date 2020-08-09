@@ -33,12 +33,13 @@ namespace SimpleChattyServer.Services
                         let threadTagsDict = (
                             from postPair in threadPair.Value
                             let postId = int.Parse(postPair.Key)
-                            let postTagsDict = postPair.Value.ToDictionary(
-                                x => x.Key,
-                                x => int.Parse(x.Value))
-                            select (PostId: postId, PostTags: postTagsDict)
+                            let postLols = (
+                                from x in postPair.Value
+                                select new LolModel { Tag = x.Key, Count = int.Parse(x.Value) }
+                                ).ToList()
+                            select (PostId: postId, PostTags: postLols)
                             ).ToDictionary(x => x.PostId, x => x.PostTags)
-                        let threadLolCounts = new ThreadLolCounts { CountsByPostIdThenTag = threadTagsDict }
+                        let threadLolCounts = new ThreadLolCounts { CountsByPostId = threadTagsDict }
                         select (ThreadId: threadId, ThreadLolCounts: threadLolCounts)
                         ).ToDictionary(x => x.ThreadId, x => x.ThreadLolCounts)
                 };
@@ -58,13 +59,14 @@ namespace SimpleChattyServer.Services
             return
                 new ThreadLolCounts
                 {
-                    CountsByPostIdThenTag = (
+                    CountsByPostId = (
                         from tag in response.Data
                         group tag by int.Parse(tag.ThreadId) into post_group
-                        let postDict = post_group.ToDictionary(
-                            x => GetTagName(x.Tag),
-                            x => int.Parse(x.Total))
-                        select (PostId: post_group.Key, Tags: postDict)
+                        let postLols = (
+                            from x in post_group
+                            select new LolModel { Tag = GetTagName(x.Tag), Count = int.Parse(x.Total) }
+                            ).ToList()
+                        select (PostId: post_group.Key, Tags: postLols)
                         ).ToDictionary(x => x.PostId, x => x.Tags)
                 };
         }

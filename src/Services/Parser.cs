@@ -1,4 +1,5 @@
 using System;
+using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
@@ -44,7 +45,8 @@ namespace SimpleChattyServer.Services
             var i = Cursors[1];
             var j = _html.IndexOf(keyword, i);
             if (j == -1)
-                throw new Exception($"Did not find '{keyword}' starting at index '{i}'");
+                throw new Api500Exception(Api500Exception.Codes.SERVER,
+                    $"Did not find '{keyword}' starting at index {i}.");
             else
                 Cursors[cursor] = j;
         }

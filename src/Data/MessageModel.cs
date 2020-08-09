@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
@@ -8,7 +9,7 @@ namespace SimpleChattyServer.Data
         public string From { get; set; }
         public string To { get; set; }
         public string Subject { get; set; }
-        public DateTimeOffset Date { get; set; }
+        [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
         public string Body { get; set; }
         public bool Unread { get; set; }
     }

@@ -60,7 +60,7 @@ namespace SimpleChattyServer.Services
                 " Threads"));
             chattyPage.LastPage = (int)Math.Max(Math.Ceiling(numThreads / 40d), 1);
 
-            while (p.Peek(1, "'<div class=\"fullpost") != -1)
+            while (p.Peek(1, "<div class=\"fullpost") != -1)
             {
                 var thread = _threadParser.ParseThreadTree(p);
                 chattyPage.Threads.Add(thread);
