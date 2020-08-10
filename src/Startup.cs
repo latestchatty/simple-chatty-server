@@ -21,10 +21,11 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
-            services.AddSingleton<ChattyAccess>();
+            services.AddSingleton<ChattyProvider>();
             services.AddSingleton<ChattyParser>();
             services.AddSingleton<DownloadService>();
             services.AddSingleton<EmojiConverter>();
+            services.AddSingleton<EventProvider>();
             services.AddSingleton<LolParser>();
             services.AddSingleton<SearchParser>();
             services.AddSingleton<ThreadParser>();

@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
@@ -7,7 +6,7 @@ namespace SimpleChattyServer.Data
     {
         public int Id { get; set; }
         public int Depth { get; set; }
-        public string Category { get; set; }
+        public ModerationFlag Category { get; set; }
         public string Author { get; set; }
         public string Body { get; set; }
         public string Preview { get; set; }

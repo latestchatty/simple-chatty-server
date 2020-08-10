@@ -230,7 +230,7 @@ When your event loop retrieves a new event:
 - For a server message, show a message box to the user with the specified administrator message.
 
 When the user changes a client option:
-- If the username and password were changed, called [/v2/verifyCredentials](#post-v2verifycredentials) to ensure the login information is valid.
+- If the username and password were changed, call [/v2/verifyCredentials](#post-v2verifycredentials) to ensure the login information is valid.
 - Call [/v2/clientData/](#client-data) methods to save the updated client options.
 
 ## Threads
@@ -240,8 +240,7 @@ These API calls relate to the chatty itself.   These are the core of the v2 API.
 Gets the list of recently bumped threads, starting with the most recently bumped.  Only "active" threads (i.e. threads that have not expired) are included.  Thus this essentially grabs the entire chatty.  The full threads are returned.  You should call this method to bootstrap your application's local copy of the chatty, and then use [/v2/waitForEvent](#get-v2waitforevent) to keep it up to date.
 
 Parameters:
-- `count=[INT?]` - The number of threads to return.  If not specified, then all active (not expired) threads are returned.
-- `expiration=[INT?,36]` - The number of hours to keep threads around in this list.  If not provided, then the default of 18 is used.  The maximum is 36 hours.
+- None.
 
 Response:
 ```
@@ -264,7 +263,6 @@ Parameters:
 - `offset=[INT?]` - Number of threads to skip (for paging).  Default is 0.
 - `limit=[INT?]` - Maximum number of threads to return (for paging).  Default is 40.
 - `username=[STR?]` - If provided, this allows the isParticipant flag to be returned for each thread indicating whether the user posted that thread or replied to it.  If not provided, the isParticipant flag will always be false.
-- `date=[DAT?]` - If provided, posts from this day will be returned rather than the currently active chatty posts.  Root posts will be returned in order from highest to lowest postCount.
 
 Response:
 ```
@@ -368,8 +366,7 @@ Parameters:
 Response:
 ```
 {
-   "result": "success",
-   "newPostId": [INT]
+   "result": "success"
 }
 ```
 

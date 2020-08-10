@@ -7,6 +7,10 @@ namespace SimpleChattyServer.Exceptions
             public const string SERVER = "ERR_SERVER";
         }
 
+        public Api500Exception(string message) : base(Codes.SERVER, message)
+        {
+        }
+
         public Api500Exception(string code, string message) : base(code, message)
         {
         }

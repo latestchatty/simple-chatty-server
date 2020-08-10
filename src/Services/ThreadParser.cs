@@ -80,15 +80,15 @@ namespace SimpleChattyServer.Services
                 reply.Id = int.Parse(p.Clip(
                     new[] { "<div id=\"item_", "_" },
                     "\">"));
-                reply.Category = p.Clip(
+                reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
-                    " ");
+                    " "));
                 reply.Author = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
                 reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
-                    "</div>"))));
+                    "</div>")))).Trim();
                 reply.Date = ParseDate(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
                     "T</div")) + "T");
@@ -125,7 +125,7 @@ namespace SimpleChattyServer.Services
             var list = new List<ChattyPost>();
             var rootBody = MakeSpoilersClickable(WebUtility.HtmlDecode(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
-                "</div>").Trim()));
+                "</div>"))).Trim();
             var rootDate = ParseDate(StripTags(p.Clip(
                 new[] { "<div class=\"postdate\">", ">" },
                 "T</div")) + "T");
@@ -149,15 +149,15 @@ namespace SimpleChattyServer.Services
                     reply.Date = rootDate;
                 }
 
-                reply.Category = p.Clip(
+                reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"oneline", "olmod_", "_" },
-                    " ");
+                    " "));
                 reply.Id = int.Parse(p.Clip(
                     new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" },
                     "\""));
                 reply.Preview = RemoveSpoilers(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"oneline_body\">", ">" },
-                    "</span> : </a><span class=\"oneline_user \""))).Trim());
+                    "</span> : </a><span class=\"oneline_user \"")))).Trim();
                 reply.Author = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"oneline_user", ">" },
                     "</span>"));
@@ -206,6 +206,20 @@ namespace SimpleChattyServer.Services
             }
 
             return new ChattyThread { Posts = list };
+        }
+
+        public async Task<(int ContentTypeId, int ContentId)> GetContentTypeId(int postId)
+        {
+            var html = await _downloadService.DownloadWithSharedLogin($"https://www.shacknews.com/chatty?id={postId}");
+            var p = new Parser(html);
+            p.Seek(1, "<input type=\"hidden\" name=\"content_type_id\"");
+            var contentTypeId = int.Parse(p.Clip(
+                new[] { "value=\"", "\"" },
+                "\""));
+            var contentId = int.Parse(p.Clip(
+                new[] { "value=\"", "\"" },
+                "\""));
+            return (contentTypeId, contentId);
         }
 
         private string PreviewFromBody(string body) =>
