@@ -70,7 +70,7 @@ This documents the WebChatty API, a backend web service for a chatty-style forum
 This API implements a subset of versions 1 and 2 of the WinChatty API, allowing it to support preexisting clients of that API.
 
 ### Protocols
-Client applications should be configured to use GZIP compression.  On average GZIP cuts the size of responses down by 75%.  Try calling [/v2/checkConnection](#get-v2checkconnection) to verify that you are correctly using GZIP.
+Client applications should be configured to use GZIP compression.  On average GZIP cuts the size of responses down by 75%.
 
 The v2 API uses neither cookies nor HTTP authentication.  Usernames and passwords, when applicable, are passed via POST arguments.  It is highly recommended that HTTPS be used so that usernames and passwords are not transmitted in plain text.  You may wish to use HTTP for requests where passwords are not transmitted; in mobile clients on cellular networks, the SSL handshaking can add a significant amount of latency.
 
