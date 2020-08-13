@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Data
 {
@@ -28,7 +29,7 @@ namespace SimpleChattyServer.Data
             {
                 case "inbox": return Mailbox.Inbox;
                 case "sent": return Mailbox.Sent;
-                default: throw new ArgumentOutOfRangeException(str);
+                default: throw new Api400Exception("Invalid mailbox.");
             }
         }
     }

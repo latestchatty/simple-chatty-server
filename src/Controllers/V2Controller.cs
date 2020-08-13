@@ -19,14 +19,16 @@ namespace SimpleChattyServer.Controllers
         private readonly SearchParser _searchParser;
         private readonly EventProvider _eventProvider;
         private readonly ChattyParser _chattyParser;
+        private readonly MessageParser _messageParser;
 
         public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
-            ChattyParser chattyParser)
+            ChattyParser chattyParser, MessageParser messageParser)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
             _eventProvider = eventProvider;
             _chattyParser = chattyParser;
+            _messageParser = messageParser;
         }
 
         [HttpGet("getChatty")]
@@ -306,6 +308,57 @@ namespace SimpleChattyServer.Controllers
         public GetAllTenYearUsersResponse GetAllTenYearUsers()
         {
             return new GetAllTenYearUsersResponse { Users = new List<string>() };
+        }
+
+        [HttpGet("getMessages")]
+        public async Task<GetMessagesResponse> GetMessages(GetMessagesRequest request)
+        {
+            var mailbox = MailboxConverter.Parse(request.Folder);
+            var messagePage = await _messageParser.GetMessagePage(
+                mailbox, request.Username, request.Password, request.Page);
+            return new GetMessagesResponse
+            {
+                Page = request.Page,
+                TotalPages = messagePage.LastPage,
+                TotalMessages = messagePage.TotalCount,
+                Messages = messagePage.Messages
+            };
+        }
+
+        [HttpGet("getMessageCount")]
+        public async Task<GetMessageCountResponse> GetMessageCount(GetMessageCountRequest request)
+        {
+            var messagePage = await _messageParser.GetMessagePage(
+                Mailbox.Inbox, request.Username, request.Password, 1);
+            return new GetMessageCountResponse
+            {
+                Total = messagePage.TotalCount,
+                Unread = messagePage.Messages.Count(x => x.Unread)
+            };
+        }
+
+        [HttpPost("sendMessage")]
+        public async Task<SuccessResponse> SendMessage(SendMessageRequest request)
+        {
+            await _messageParser.SendMessage(request.Username, request.Password, request.To, request.Subject,
+                request.Body);
+            return new SuccessResponse();
+        }
+
+        [HttpPost("markMessageRead")]
+        public async Task<SuccessResponse> MarkMessageRead(MarkMessageReadRequest request)
+        {
+            await _messageParser.MarkMessageAsRead(request.Username, request.Password, request.MessageId);
+            return new SuccessResponse();
+        }
+
+        [HttpPost("deleteMessage")]
+        public async Task<SuccessResponse> DeleteMessage(DeleteMessageRequest request)
+        {
+            MailboxConverter.Parse(request.Folder); // validate
+            await _messageParser.DeleteMessageInFolder(request.Username, request.Password, request.MessageId,
+                request.Folder);
+            return new SuccessResponse();
         }
 
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)

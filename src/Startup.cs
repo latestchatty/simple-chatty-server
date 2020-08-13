@@ -27,6 +27,7 @@ namespace SimpleChattyServer
             services.AddSingleton<EmojiConverter>();
             services.AddSingleton<EventProvider>();
             services.AddSingleton<LolParser>();
+            services.AddSingleton<MessageParser>();
             services.AddSingleton<SearchParser>();
             services.AddSingleton<ThreadParser>();
             services.AddHostedService<ScrapeService>();

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data.Options;
+using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
@@ -129,7 +130,7 @@ namespace SimpleChattyServer.Services
             if (html.Contains("{\"result\":{\"valid\":\"true\""))
                 return response.Cookies.Cast<Cookie>().ToList();
             else
-                throw new Exception("Unable to log into the user account.");
+                throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, "Unable to log into the user account.");
         }
 
         private async Task WriteRequestBody(HttpWebRequest request, string query)
