@@ -1,7 +1,8 @@
-namespace SimpleChattyServer.Data
+namespace SimpleChattyServer.Data.Requests
 {
-    public sealed class FiltersModel
+    public sealed class SetCategoryFiltersRequest
     {
+        public string Username { get; set; }
         public bool Nws { get; set; }
         public bool Stupid { get; set; }
         public bool Political { get; set; }

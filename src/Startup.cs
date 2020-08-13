@@ -21,6 +21,7 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
+            services.Configure<UserDataOptions>(Configuration.GetSection(UserDataOptions.SectionName));
             services.AddSingleton<ChattyProvider>();
             services.AddSingleton<ChattyParser>();
             services.AddSingleton<DownloadService>();
@@ -30,6 +31,7 @@ namespace SimpleChattyServer
             services.AddSingleton<MessageParser>();
             services.AddSingleton<SearchParser>();
             services.AddSingleton<ThreadParser>();
+            services.AddSingleton<UserDataProvider>();
             services.AddHostedService<ScrapeService>();
             services.AddControllers();
         }

@@ -663,7 +663,7 @@ Access to client data requires only a username.  Don't store secrets in the clie
 Gets the user's moderation flag filters.  A value of true indicates that posts in that category are shown.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 
 Response:
 ```
@@ -683,7 +683,7 @@ Response:
 Sets the user's moderation flag filters.  A value of true indicates that posts in that category are shown.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 - `nws=[BIT]` - Not work safe filter.
 - `stupid=[BIT]` - Stupid filter.
 - `political=[BIT]` - Political/religious filter.
@@ -701,7 +701,7 @@ Response:
 Gets all the user's marked posts (pinned or collapsed).
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 
 Response:
 ```
@@ -721,7 +721,7 @@ Response:
 Clears the user's marked posts.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 
 Response:
 ```
@@ -734,7 +734,7 @@ Response:
 Marks a post as unmarked, pinned, or collapsed.  The default for a regular post is unmarked.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 - `postId=[INT]` - Post ID.
 - `type=[MPT]` - Mark type.
 
@@ -745,14 +745,11 @@ Response:
 }
 ```
 
-Errors:
-- `ERR_POST_DOES_NOT_EXIST`
-
 ### GET /v2/clientData/getClientData
 Gets the client-specified data for the specified user.  This is just a blob of text that can be anything the client wants to store on the server (e.g. user preferences).  This data is specific to a particular client so that one client's data does not interfere with another client's data for the same user.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 - `client=[STR,50]` - The unique name of this client.  This is chosen by the client author.  It is not displayed anywhere; it is only used to distinguish one client's data from another.  Recommended strings are something short and descriptive, without a version number.  Examples: "lamp", "chromeshack", etc.
 
 Response:
@@ -766,7 +763,7 @@ Response:
 Sets the private client data for the specified user.  This is just a blob of text that can be anything the client wants to store on the server (e.g. user preferences).  This data is specific to a particular client so that one client's data does not interfere with another client's data for the same user.  Beware: anyone can access this data with just a username.  Do not store secret or private information without encrypting it.
 
 Parameters:
-- `username=[STR,50]` - Username.
+- `username=[STR]` - Username.
 - `client=[STR,50]` - The unique name of this client.  This is chosen by the client author.  It is not displayed anywhere; it is only used to distinguish one client's data from another.  Recommended strings are something short and descriptive, without a version number.  Examples: "lamp", "chromeshack", etc.
 - `data=[STR,100000]` - Client-specified data.  I recommend Base64-encoding this data.  Maximum: 100,000 bytes.
 

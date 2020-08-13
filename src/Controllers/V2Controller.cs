@@ -20,15 +20,17 @@ namespace SimpleChattyServer.Controllers
         private readonly EventProvider _eventProvider;
         private readonly ChattyParser _chattyParser;
         private readonly MessageParser _messageParser;
+        private readonly UserDataProvider _userDataProvider;
 
         public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
-            ChattyParser chattyParser, MessageParser messageParser)
+            ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
             _eventProvider = eventProvider;
             _chattyParser = chattyParser;
             _messageParser = messageParser;
+            _userDataProvider = userDataProvider;
         }
 
         [HttpGet("getChatty")]
@@ -358,6 +360,91 @@ namespace SimpleChattyServer.Controllers
             MailboxConverter.Parse(request.Folder); // validate
             await _messageParser.DeleteMessageInFolder(request.Username, request.Password, request.MessageId,
                 request.Folder);
+            return new SuccessResponse();
+        }
+
+        [HttpGet("clientData/getCategoryFilters")]
+        public async Task<GetCategoryFiltersResponse> GetCategoryFilters(string username)
+        {
+            var userData = await _userDataProvider.GetUserData(username);
+            return new GetCategoryFiltersResponse
+            {
+                Filters = new GetCategoryFiltersResponse.CategoryFilters
+                {
+                    Nws = userData.FilterNws,
+                    Stupid = userData.FilterStupid,
+                    Political = userData.FilterPolitical,
+                    Tangent = userData.FilterTangent,
+                    Informative = userData.FilterInformative
+                }
+            };
+        }
+
+        [HttpPost("clientData/setCategoryFilters")]
+        public async Task<SuccessResponse> SetCategoryFilters(SetCategoryFiltersRequest request)
+        {
+            await _userDataProvider.UpdateUserData(request.Username,
+                userData =>
+                {
+                    userData.FilterNws = request.Nws;
+                    userData.FilterStupid = request.Stupid;
+                    userData.FilterPolitical = request.Political;
+                    userData.FilterTangent = request.Tangent;
+                    userData.FilterInformative = request.Informative;
+                });
+            return new SuccessResponse();
+        }
+
+        [HttpGet("clientData/getMarkedPosts")]
+        public async Task<GetMarkedPostsResponse> GetMarkedPosts(string username)
+        {
+            var userData = await _userDataProvider.GetUserData(username);
+            return new GetMarkedPostsResponse { MarkedPosts = userData.MarkedPosts };
+        }
+
+        [HttpPost("clientData/clearMarkedPosts")]
+        public async Task<SuccessResponse> ClearMarkedPosts(ClearMarkedPostsRequest request)
+        {
+            await _userDataProvider.UpdateUserData(request.Username,
+                userData => userData.MarkedPosts.Clear());
+            return new SuccessResponse();
+        }
+
+        [HttpPost("clientData/markPost")]
+        public async Task<SuccessResponse> MarkPost(MarkPostRequest request)
+        {
+            var type = MarkedPostTypeConverter.Parse(request.Type);
+            await _userDataProvider.UpdateUserData(request.Username,
+                userData =>
+                {
+                    userData.MarkedPosts.RemoveAll(x => x.Id == request.PostId);
+                    if (type != MarkedPostType.Unmarked)
+                        userData.MarkedPosts.Add(new MarkedPostModel { Id = request.PostId, Type = type });
+                });
+            return new SuccessResponse();
+        }
+
+        [HttpGet("clientData/getClientData")]
+        public async Task<GetClientDataResponse> GetClientData(string username, string client)
+        {
+            if (client.Length > 50)
+                throw new Api400Exception("Parameter \"client\" must be at most 50 characters.");
+            var userData = await _userDataProvider.GetUserData(username);
+            if (userData.ClientData.TryGetValue(client, out var clientData))
+                return new GetClientDataResponse { Data = clientData };
+            else
+                return new GetClientDataResponse { Data = "" };
+        }
+
+        [HttpPost("clientData/setClientData")]
+        public async Task<SuccessResponse> SetClientData(SetClientDataRequest request)
+        {
+            if (request.Client.Length > 50)
+                throw new Api400Exception("Parameter \"client\" must be at most 50 characters.");
+            if (request.Data.Length > 100000)
+                throw new Api400Exception("Parameter \"data\" must be at most 100,000 characters.");
+            await _userDataProvider.UpdateUserData(request.Username,
+                userData => userData.ClientData[request.Client] = request.Data);
             return new SuccessResponse();
         }
 
