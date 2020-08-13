@@ -91,23 +91,17 @@ namespace SimpleChattyServer.Services
             foreach (var ch in username.ToLowerInvariant())
             {
                 if (ch >= 'a' && ch <= 'z')
-                {
                     sb.Append(ch);
-                }
                 else if (ch == ' ')
-                {
                     sb.Append('_');
-                }
                 else
-                {
                     sb.Append(((int)ch).ToString("X").PadLeft(4, '0'));
-                }
             }
             sb.Append(".json");
             var str = sb.ToString();
             if (str.Length > 100)
                 str = str.Substring(0, 100);
-            return Path.Combine(_userDataOptions.Path, sb.ToString());
+            return Path.Combine(_userDataOptions.Path, str);
         }
     }
 }
