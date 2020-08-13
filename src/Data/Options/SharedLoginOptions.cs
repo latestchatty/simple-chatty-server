@@ -1,4 +1,4 @@
-namespace SimpleChattyServer.Options
+namespace SimpleChattyServer.Data.Options
 {
     public sealed class SharedLoginOptions
     {

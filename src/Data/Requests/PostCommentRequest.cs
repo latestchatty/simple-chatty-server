@@ -1,4 +1,4 @@
-namespace SimpleChattyServer.Data
+namespace SimpleChattyServer.Data.Requests
 {
     public sealed class PostCommentRequest
     {

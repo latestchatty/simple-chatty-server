@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Exceptions;
-using SimpleChattyServer.Responses;
+using SimpleChattyServer.Data.Requests;
+using SimpleChattyServer.Data.Responses;
 using SimpleChattyServer.Services;
+using System.Diagnostics;
 
 namespace SimpleChattyServer.Controllers
 {
@@ -15,11 +17,16 @@ namespace SimpleChattyServer.Controllers
     {
         private readonly ChattyProvider _chattyProvider;
         private readonly SearchParser _searchParser;
+        private readonly EventProvider _eventProvider;
+        private readonly ChattyParser _chattyParser;
 
-        public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser)
+        public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
+            ChattyParser chattyParser)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
+            _eventProvider = eventProvider;
+            _chattyParser = chattyParser;
         }
 
         [HttpGet("getChatty")]
@@ -35,7 +42,7 @@ namespace SimpleChattyServer.Controllers
                     select new GetChattyResponse.Thread
                     {
                         ThreadId = thread.ThreadId,
-                        Posts = CreatePostModelList(thread, threadLolCounts)
+                        Posts = PostModel.CreateList(thread, threadLolCounts)
                     }).ToList()
             };
         }
@@ -80,7 +87,7 @@ namespace SimpleChattyServer.Controllers
                         new GetChattyResponse.Thread
                         {
                             ThreadId = thread.ThreadId,
-                            Posts = CreatePostModelList(thread, lols)
+                            Posts = PostModel.CreateList(thread, lols)
                         });
                 }
                 catch (MissingThreadException)
@@ -131,7 +138,7 @@ namespace SimpleChattyServer.Controllers
             {
                 var postId = idSet.First();
                 var (thread, lols) = await _chattyProvider.GetThreadAndLols(postId);
-                var posts = CreatePostModelList(thread, lols);
+                var posts = PostModel.CreateList(thread, lols);
                 foreach (var post in posts)
                 {
                     if (idSet.Contains(post.Id))
@@ -213,17 +220,92 @@ namespace SimpleChattyServer.Controllers
             return new GetPostResponse { Posts = list };
         }
 
-        [HttpGet("requestReindex")]
+        [HttpPost("requestReindex")]
         public SuccessResponse RequestReindex()
         {
             return new SuccessResponse();
         }
 
         [HttpPost("setPostCategory")]
-        public async Task<SuccessResponse> SetPostCategory(string username, string password, int postId, string category)
+        public async Task<SuccessResponse> SetPostCategory(SetPostCategoryRequest request)
         {
-            await _chattyProvider.SetPostCategory(username, password, postId, V2ModerationFlagConverter.Parse(category));
+            await _chattyProvider.SetPostCategory(
+                request.Username, request.Password, request.PostId, V2ModerationFlagConverter.Parse(request.Category));
             return new SuccessResponse();
+        }
+
+        [HttpGet("waitForEvent")]
+        public async Task<WaitForEventResponse> WaitForEvent(int lastEventId)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var maxTime = TimeSpan.FromMinutes(1);
+            var pollInterval = TimeSpan.FromSeconds(2.5);
+
+            while (stopwatch.Elapsed < maxTime)
+            {
+                var events = _eventProvider.GetEvents(lastEventId);
+                if (events.Count > 0)
+                {
+                    return new WaitForEventResponse
+                    {
+                        LastEventId = events.Last().EventId,
+                        Events = events
+                    };
+                }
+
+                await Task.Delay(pollInterval);
+            }
+
+            return new WaitForEventResponse
+            {
+                LastEventId = lastEventId,
+                Events = new List<EventModel>()
+            };
+        }
+
+        [HttpGet("pollForEvent")]
+        public WaitForEventResponse PollForEvent(int lastEventId)
+        {
+            var events = _eventProvider.GetEvents(lastEventId);
+            return new WaitForEventResponse
+            {
+                LastEventId = events.Count > 0 ? events.Last().EventId : lastEventId,
+                Events = events
+            };
+        }
+
+        [HttpGet("checkConnection")]
+        public SuccessResponse CheckConnection()
+        {
+            return new SuccessResponse();
+        }
+
+        [HttpPost("verifyCredentials")]
+        public async Task<VerifyCredentialsResponse> VerifyCredentials(VerifyCredentialsRequest request)
+        {
+            try
+            {
+                var isModerator = await _chattyParser.IsModerator(request.Username, request.Password);
+                return new VerifyCredentialsResponse
+                {
+                    IsValid = true,
+                    IsModerator = isModerator
+                };
+            }
+            catch
+            {
+                return new VerifyCredentialsResponse
+                {
+                    IsValid = false,
+                    IsModerator = false
+                };
+            }
+        }
+
+        [HttpGet("getAllTenYearUsers")]
+        public GetAllTenYearUsersResponse GetAllTenYearUsers()
+        {
+            return new GetAllTenYearUsersResponse { Users = new List<string>() };
         }
 
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
@@ -237,35 +319,6 @@ namespace SimpleChattyServer.Controllers
                 throw new Api400Exception($"Parameter \"{key}\" requires at most {max} integer value(s).");
             var list = new List<int>(parts.Length);
             list.AddRange(parts.Select(int.Parse));
-            return list;
-        }
-        
-        private static List<PostModel> CreatePostModelList(ChattyThread thread, ThreadLolCounts lolCounts)
-        {
-            var list = new List<PostModel>(thread.Posts.Count);
-            var maxDepth = thread.Posts.Max(x => x.Depth);
-            var lastIdAtDepth = new int[maxDepth + 1];
-
-            foreach (var post in thread.Posts)
-            {
-                lastIdAtDepth[post.Depth] = post.Id;
-                list.Add(
-                    new PostModel
-                    {
-                        Id = post.Id,
-                        ThreadId = thread.ThreadId,
-                        ParentId = post.Depth == 0 ? 0 : lastIdAtDepth[post.Depth - 1],
-                        Author = post.Author,
-                        Category = post.Category,
-                        Date = post.Date,
-                        Body = post.Body,
-                        Lols =
-                            lolCounts.CountsByPostId.TryGetValue(post.Id, out var postLols)
-                            ? postLols
-                            : new List<LolModel>()
-                    });
-            }
-
             return list;
         }
     }

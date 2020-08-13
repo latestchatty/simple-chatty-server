@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using SimpleChattyServer.Data;
 
-namespace SimpleChattyServer.Responses
+namespace SimpleChattyServer.Data.Responses
 {
     public sealed class GetUserRegistrationDateResponse
     {

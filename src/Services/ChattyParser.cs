@@ -71,5 +71,12 @@ namespace SimpleChattyServer.Services
 
             return chattyPage;
         }
+
+        public async Task<bool> IsModerator(string username, string password)
+        {
+            var html = await _downloadService.DownloadWithUserLogin(
+                "https://www.shacknews.com/moderators", username, password);
+            return html.Contains("<div id=\"mod_board_head\">");
+        }
     }
 }

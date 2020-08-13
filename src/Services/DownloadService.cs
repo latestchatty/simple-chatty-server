@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Extensions.Options;
-using SimpleChattyServer.Options;
+using SimpleChattyServer.Data.Options;
 
 namespace SimpleChattyServer.Services
 {

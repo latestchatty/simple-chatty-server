@@ -18,10 +18,12 @@ namespace SimpleChattyServer.Services
         private readonly LolParser _lolParser;
         private readonly DownloadService _downloadService;
         private readonly ChattyProvider _chattyProvider;
+        private readonly EventProvider _eventProvider;
         private readonly Timer _timer;
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
-            LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider)
+            LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider,
+            EventProvider eventProvider)
         {
             _logger = logger;
             _chattyParser = chattyParser;
@@ -29,6 +31,7 @@ namespace SimpleChattyServer.Services
             _lolParser = lolParser;
             _downloadService = downloadService;
             _chattyProvider = chattyProvider;
+            _eventProvider = eventProvider;
             _timer = new Timer(Scrape, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
@@ -74,7 +77,10 @@ namespace SimpleChattyServer.Services
 
                 var lolCounts = await _lolParser.DownloadChattyLolCounts();
 
+                var events = await _eventProvider.CreateNewEvents(newChatty, lolCounts);
+
                 _chattyProvider.Update(newChatty, lolCounts);
+                _eventProvider.Update(newChatty, lolCounts, events);
 
                 _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}");
             }

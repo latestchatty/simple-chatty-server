@@ -500,7 +500,7 @@ Errors:
 These API calls pertain to user accounts.
 
 ### GET /v2/checkConnection
-Checks to ensure the client is using GZIP and SSL.  An error is returned if GZIP compression or SSL encryption are not being correctly used.
+**Deprecated.** This backwards-compatibility stub always returns success.
 
 Parameters:
 - None.
@@ -511,10 +511,6 @@ Response:
    "result": "success"
 }
 ```
-
-Errors:
-- `ERR_NOT_USING_GZIP`
-- `ERR_NOT_USING_SSL`
 
 ### POST /v2/verifyCredentials
 Checks the validity of the given username and password.
