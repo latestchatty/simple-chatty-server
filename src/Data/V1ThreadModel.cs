@@ -5,7 +5,7 @@ namespace SimpleChattyServer.Data
 {
     public sealed class V1ThreadModel
     {
-        public List<V1CommentModel> Comments { get; set; }
+        public List<V1RootCommentModel> Comments { get; set; }
         public int Page { get; set; } = 1;
         [JsonPropertyName("last_page")] public int LastPage { get; set; } = 1;
         [JsonPropertyName("story_id")] public int StoryId { get; set; } = 0;

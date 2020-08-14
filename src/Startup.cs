@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using SimpleChattyServer.Data.Options;
 using SimpleChattyServer.Services;
 
@@ -27,6 +26,7 @@ namespace SimpleChattyServer
             services.AddSingleton<DownloadService>();
             services.AddSingleton<EmojiConverter>();
             services.AddSingleton<EventProvider>();
+            services.AddSingleton<FrontPageParser>();
             services.AddSingleton<LolParser>();
             services.AddSingleton<MessageParser>();
             services.AddSingleton<SearchParser>();

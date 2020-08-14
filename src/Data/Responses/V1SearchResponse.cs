@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using SimpleChattyServer.Data;
 
 namespace SimpleChattyServer.Data.Responses
 {

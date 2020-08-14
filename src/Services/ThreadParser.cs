@@ -322,7 +322,7 @@ namespace SimpleChattyServer.Services
             return str;
         }
 
-        private static DateTimeOffset ParseDate(string str)
+        public static DateTimeOffset ParseDate(string str)
         {
             // like "Aug 09, 2020 9:33am PDT"
             var timeZoneAbbreviation = str.Substring(str.Length - 3);

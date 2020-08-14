@@ -785,7 +785,7 @@ Type | Description
 `[V1_DAT]` | Date and time in freeform text like "Aug 02, 2015 8:01pm PDT".  Note the Pacific time zone, rather than UTC.
 `[V1_MOD]` | Moderation flag enum.  Same as `[MOD]` except it uses `"offtopic"` instead of `"tangent"`.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"offtopic"` `"informative"`
 
-`[V1_COMMENT]` - A comment and its nested children.  This is a recursive data structure.
+`[V1_ROOT_COMMENT]` - A root post.
 >```
 >{
 >   "comments": [V1_COMMENT*],
@@ -801,10 +801,23 @@ Type | Description
 >}
 >```
 
-`[V1_PAGE]` - A page of comments.
+`[V1_COMMENT]` - A comment and its nested children.  This is a recursive data structure.
 >```
 >{
 >   "comments": [V1_COMMENT*],
+>   "body": [STR],
+>   "date": [V1_DAT],
+>   "category": [V1_MOD],
+>   "author": [STR],
+>   "preview": [STR], // tags stripped out, spoilers replaced with underscores, truncated with ellipsis
+>   "id": [STR] // post ID converted to a string
+>}
+>```
+
+`[V1_PAGE]` - A page of comments.
+>```
+>{
+>   "comments": [V1_ROOT_COMMENT*],
 >   "page": [STR], // 1-based page number converted to a string
 >   "last_page": [INT],
 >   "story_id": 0, 
@@ -815,7 +828,7 @@ Type | Description
 `[V1_THREAD]` - A thread of comments.
 >```
 >{
->   "comments": [V1_COMMENT*],
+>   "comments": [V1_ROOT_COMMENT*],
 >   "page": 1, 
 >   "last_page": 1, 
 >   "story_id": 0, 
@@ -950,22 +963,12 @@ Response:
 }
 ```
 
-Error: (plain text, not JSON)
-```
-error_get_failed
-```
-
 ### POST /chatty/messages/`[INT]`.json
 **Deprecated.** Marks a message as read.  Username and password are passed via HTTP basic authentication.  The number in the URL is the message ID to mark as read.
 
 Response: (plain text, not JSON)
 ```
 ok
-```
-
-Error: (plain text, not JSON)
-```
-error_mark_failed
 ```
 
 ### POST /chatty/messages/send/
@@ -981,11 +984,6 @@ Response: (plain text, not JSON)
 OK
 ```
 
-Error: (plain text, not JSON)
-```
-error_send_failed
-```
-
 ### POST /chatty/post/
 **Deprecated.** Posts a comment.  Username and password are passed via HTTP basic authentication.
 
@@ -994,9 +992,3 @@ Parameters:
 - `body=[STR]` - Comment text.
 
 Response: (blank)
-
-Errors: (plain text, not JSON)
-- `error_login_failed`
-- `error_post_rate_limit`
-- `error_post_failed`
-
