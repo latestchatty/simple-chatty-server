@@ -33,6 +33,22 @@ namespace SimpleChattyServer.Controllers
             _userDataProvider = userDataProvider;
         }
 
+        [HttpGet]
+        public ContentResult Index()
+        {
+            Response.StatusCode = 301;
+            Response.Headers["Location"] = "https://github.com/latestchatty/simple-chatty-server/blob/master/doc/api.md";
+            return Content("");
+        }
+
+        [HttpGet("readme")]
+        public ContentResult Readme()
+        {
+            Response.StatusCode = 301;
+            Response.Headers["Location"] = "https://github.com/latestchatty/simple-chatty-server/blob/master/doc/api.md";
+            return Content("");
+        }
+
         [HttpGet("getChatty")]
         public GetChattyResponse GetChatty()
         {
