@@ -14,13 +14,13 @@ namespace SimpleChattyServer.Services
     public sealed class UserDataProvider
     {
         private readonly ILogger _logger;
-        private readonly UserDataOptions _userDataOptions;
+        private readonly StorageOptions _storageOptions;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-        public UserDataProvider(ILogger<UserDataProvider> logger, IOptions<UserDataOptions> userDataOptions)
+        public UserDataProvider(ILogger<UserDataProvider> logger, IOptions<StorageOptions> storageOptions)
         {
             _logger = logger;
-            _userDataOptions = userDataOptions.Value;
+            _storageOptions = storageOptions.Value;
         }
 
         public async Task<UserData> GetUserData(string username)
@@ -101,7 +101,7 @@ namespace SimpleChattyServer.Services
             var str = sb.ToString();
             if (str.Length > 100)
                 str = str.Substring(0, 100);
-            return Path.Combine(_userDataOptions.Path, str);
+            return Path.Combine(_storageOptions.Path, str);
         }
     }
 }
