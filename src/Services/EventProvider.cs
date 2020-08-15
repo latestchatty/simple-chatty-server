@@ -33,123 +33,27 @@ namespace SimpleChattyServer.Services
                 return new List<EventModel>();
             }
 
-            _eventsLock.EnterReadLock();
-            try
+            return await Task.Run(() =>
             {
-                var nextEventId = _events.Count == 0 ? 1 : _events.Last().EventId + 1;
-                var newEvents = new List<EventModel>();
-
-                foreach (var oldThreadId in
-                    from thread in _chatty.Threads
-                    where !newChatty.ThreadsByRootId.ContainsKey(thread.ThreadId)
-                    select thread.ThreadId)
+                _eventsLock.EnterReadLock();
+                try
                 {
-                    // was this thread nuked or did it expire?
-                    if (await DoesThreadExist(oldThreadId))
-                    {
-                        // expired thread -- no event needed
-                    }
-                    else
-                    {
-                        // nuked thread
-                        newEvents.Add(
-                            new EventModel
-                            {
-                                EventId = nextEventId++,
-                                EventDate = DateTimeOffset.Now,
-                                EventType = EventType.CategoryChange,
-                                EventData = new CategoryChangeEventDataModel
-                                {
-                                    PostId = oldThreadId,
-                                    Category = ModerationFlag.Nuked
-                                }
-                            });
-                    }
-                }
+                    var nextEventId = _events.Count == 0 ? 1 : _events.Last().EventId + 1;
+                    var newEvents = new List<EventModel>();
 
-                foreach (var newThread in
-                    from thread in newChatty.Threads
-                    where !_chatty.ThreadsByRootId.ContainsKey(thread.ThreadId)
-                    select thread)
-                {
-                    // new thread
-                    var newPostModels = GetPostModelsById(newThread, newChattyLolCounts);
-                    foreach (var newPost in newPostModels.Values.OrderBy(x => x.Id))
+                    foreach (var oldThreadId in
+                        from thread in _chatty.Threads
+                        where !newChatty.ThreadsByRootId.ContainsKey(thread.ThreadId)
+                        select thread.ThreadId)
                     {
-                        newEvents.Add(
-                            new EventModel
-                            {
-                                EventId = nextEventId++,
-                                EventDate = DateTimeOffset.Now,
-                                EventType = EventType.NewPost,
-                                EventData = new NewPostEventDataModel
-                                {
-                                    PostId = newPost.Id,
-                                    Post = newPost,
-                                    ParentAuthor = newPost.ParentId == 0 ? "" : newPostModels[newPost.ParentId].Author
-                                }
-                            });
-                    }
-                }
-
-                foreach (var newThread in newChatty.Threads)
-                {
-                    if (!_chatty.ThreadsByRootId.TryGetValue(newThread.ThreadId, out var oldThread))
-                        continue;                
-
-                    var oldPostModels = GetPostModelsById(oldThread, _chattyLolCounts);
-                    var newPostModels = GetPostModelsById(newThread, newChattyLolCounts);
-
-                    foreach (var oldPost in
-                        from postPair in oldPostModels
-                        where !newPostModels.ContainsKey(postPair.Key)
-                        orderby postPair.Key
-                        select postPair.Value)
-                    {
-                        // nuked post
-                        newEvents.Add(
-                            new EventModel
-                            {
-                                EventId = nextEventId++,
-                                EventDate = DateTimeOffset.Now,
-                                EventType = EventType.CategoryChange,
-                                EventData = new CategoryChangeEventDataModel
-                                {
-                                    PostId = oldPost.Id,
-                                    Category = ModerationFlag.Nuked
-                                }
-                            });                    
-                    }
-
-                    foreach (var newPost in
-                        from postPair in newPostModels
-                        where !oldPostModels.ContainsKey(postPair.Key)
-                        orderby postPair.Key
-                        select postPair.Value)
-                    {
-                        // new post
-                        newEvents.Add(
-                            new EventModel
-                            {
-                                EventId = nextEventId++,
-                                EventDate = DateTimeOffset.Now,
-                                EventType = EventType.NewPost,
-                                EventData = new NewPostEventDataModel
-                                {
-                                    PostId = newPost.Id,
-                                    Post = newPost,
-                                    ParentAuthor = newPost.ParentId == 0 ? "" : newPostModels[newPost.ParentId].Author
-                                }
-                            });
-                    }
-
-                    foreach (var newPost in newPostModels.Values)
-                    {
-                        if (!oldPostModels.TryGetValue(newPost.Id, out var oldPost))
-                            continue;
-                        
-                        if (oldPost.Category != newPost.Category)
+                        // was this thread nuked or did it expire?
+                        if (DoesThreadExist(oldThreadId).GetAwaiter().GetResult())
                         {
+                            // expired thread -- no event needed
+                        }
+                        else
+                        {
+                            // nuked thread
                             newEvents.Add(
                                 new EventModel
                                 {
@@ -158,44 +62,143 @@ namespace SimpleChattyServer.Services
                                     EventType = EventType.CategoryChange,
                                     EventData = new CategoryChangeEventDataModel
                                     {
-                                        PostId = newPost.Id,
-                                        Category = newPost.Category
+                                        PostId = oldThreadId,
+                                        Category = ModerationFlag.Nuked
                                     }
                                 });
                         }
+                    }
 
-                        if (!Enumerable.SequenceEqual(
-                            oldPost.Lols.OrderBy(x => x.Tag),
-                            newPost.Lols.OrderBy(x => x.Tag)))
+                    foreach (var newThread in
+                        from thread in newChatty.Threads
+                        where !_chatty.ThreadsByRootId.ContainsKey(thread.ThreadId)
+                        select thread)
+                    {
+                        // new thread
+                        var newPostModels = GetPostModelsById(newThread, newChattyLolCounts);
+                        foreach (var newPost in newPostModels.Values.OrderBy(x => x.Id))
                         {
                             newEvents.Add(
                                 new EventModel
                                 {
                                     EventId = nextEventId++,
                                     EventDate = DateTimeOffset.Now,
-                                    EventType = EventType.LolCountsUpdate,
-                                    EventData = new LolCountsUpdateEventDataModel
+                                    EventType = EventType.NewPost,
+                                    EventData = new NewPostEventDataModel
                                     {
-                                        Updates = (
-                                            from x in newPost.Lols
-                                            select new LolCountUpdateModel
-                                            {
-                                                PostId = newPost.Id,
-                                                Tag = x.Tag,
-                                                Count = x.Count
-                                            }).ToList() 
+                                        PostId = newPost.Id,
+                                        Post = newPost,
+                                        ParentAuthor = newPost.ParentId == 0 ? "" : newPostModels[newPost.ParentId].Author
                                     }
                                 });
                         }
                     }
-                }
 
-                return newEvents;
-            }
-            finally
-            {
-                _eventsLock.ExitReadLock();
-            }
+                    foreach (var newThread in newChatty.Threads)
+                    {
+                        if (!_chatty.ThreadsByRootId.TryGetValue(newThread.ThreadId, out var oldThread))
+                            continue;                
+
+                        var oldPostModels = GetPostModelsById(oldThread, _chattyLolCounts);
+                        var newPostModels = GetPostModelsById(newThread, newChattyLolCounts);
+
+                        foreach (var oldPost in
+                            from postPair in oldPostModels
+                            where !newPostModels.ContainsKey(postPair.Key)
+                            orderby postPair.Key
+                            select postPair.Value)
+                        {
+                            // nuked post
+                            newEvents.Add(
+                                new EventModel
+                                {
+                                    EventId = nextEventId++,
+                                    EventDate = DateTimeOffset.Now,
+                                    EventType = EventType.CategoryChange,
+                                    EventData = new CategoryChangeEventDataModel
+                                    {
+                                        PostId = oldPost.Id,
+                                        Category = ModerationFlag.Nuked
+                                    }
+                                });                    
+                        }
+
+                        foreach (var newPost in
+                            from postPair in newPostModels
+                            where !oldPostModels.ContainsKey(postPair.Key)
+                            orderby postPair.Key
+                            select postPair.Value)
+                        {
+                            // new post
+                            newEvents.Add(
+                                new EventModel
+                                {
+                                    EventId = nextEventId++,
+                                    EventDate = DateTimeOffset.Now,
+                                    EventType = EventType.NewPost,
+                                    EventData = new NewPostEventDataModel
+                                    {
+                                        PostId = newPost.Id,
+                                        Post = newPost,
+                                        ParentAuthor = newPost.ParentId == 0 ? "" : newPostModels[newPost.ParentId].Author
+                                    }
+                                });
+                        }
+
+                        foreach (var newPost in newPostModels.Values)
+                        {
+                            if (!oldPostModels.TryGetValue(newPost.Id, out var oldPost))
+                                continue;
+                            
+                            if (oldPost.Category != newPost.Category)
+                            {
+                                newEvents.Add(
+                                    new EventModel
+                                    {
+                                        EventId = nextEventId++,
+                                        EventDate = DateTimeOffset.Now,
+                                        EventType = EventType.CategoryChange,
+                                        EventData = new CategoryChangeEventDataModel
+                                        {
+                                            PostId = newPost.Id,
+                                            Category = newPost.Category
+                                        }
+                                    });
+                            }
+
+                            if (!Enumerable.SequenceEqual(
+                                oldPost.Lols.OrderBy(x => x.Tag),
+                                newPost.Lols.OrderBy(x => x.Tag)))
+                            {
+                                newEvents.Add(
+                                    new EventModel
+                                    {
+                                        EventId = nextEventId++,
+                                        EventDate = DateTimeOffset.Now,
+                                        EventType = EventType.LolCountsUpdate,
+                                        EventData = new LolCountsUpdateEventDataModel
+                                        {
+                                            Updates = (
+                                                from x in newPost.Lols
+                                                select new LolCountUpdateModel
+                                                {
+                                                    PostId = newPost.Id,
+                                                    Tag = x.Tag,
+                                                    Count = x.Count
+                                                }).ToList() 
+                                        }
+                                    });
+                            }
+                        }
+                    }
+
+                    return newEvents;
+                }
+                finally
+                {
+                    _eventsLock.ExitReadLock();
+                }
+            });
         }
 
         public void Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts, List<EventModel> newEvents)

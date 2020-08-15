@@ -50,12 +50,15 @@ namespace SimpleChattyServer.Services
             var query = _downloadService.NewQuery();
             foreach (var post in thread.Posts)
                 query.Add("ids[]", $"{post.Id}");
-            
+
             var json = await _downloadService.DownloadWithSharedLogin(
                 "https://www.shacknews.com/api2/api-index.php?action2=get_all_tags_for_posts",
                 verifyLoginStatus: false,
                 postBody: query.ToString());
-            var response = JsonSerializer.Deserialize<TagsForPosts>(json);
+                
+            var response = JsonSerializer.Deserialize<TagsForPosts>(json,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
             return
                 new ThreadLolCounts
                 {

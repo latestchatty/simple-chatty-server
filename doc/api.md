@@ -1043,7 +1043,7 @@ Response:
 ### GET /chatty/stories/`[INT]`.`[INT]`.json
 **Deprecated.** Same as /chatty/stories/`[INT]`.json.  The second number in the URL is ignored.
 
-### POST /chatty/messages.json
+### GET /chatty/messages.json
 **Deprecated.** Gets the first page of the user's inbox.  Username and password are passed via HTTP basic authentication.
 
 Response:
@@ -1065,7 +1065,7 @@ Response:
 }
 ```
 
-### POST /chatty/messages/`[INT]`.json
+### PUT /chatty/messages/`[INT]`.json
 **Deprecated.** Marks a message as read.  Username and password are passed via HTTP basic authentication.  The number in the URL is the message ID to mark as read.
 
 Response: (plain text, not JSON)

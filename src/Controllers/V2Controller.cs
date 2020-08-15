@@ -156,7 +156,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("postComment")]
-        public async Task<SuccessResponse> PostComment(PostCommentRequest request)
+        public async Task<SuccessResponse> PostComment([FromForm] PostCommentRequest request)
         {
             await _chattyProvider.Post(request.Username, request.Password, request.ParentId, request.Text);
             return new SuccessResponse();
@@ -231,11 +231,17 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("setPostCategory")]
-        public async Task<SuccessResponse> SetPostCategory(SetPostCategoryRequest request)
+        public async Task<SuccessResponse> SetPostCategory([FromForm] SetPostCategoryRequest request)
         {
             await _chattyProvider.SetPostCategory(
                 request.Username, request.Password, request.PostId, V2ModerationFlagConverter.Parse(request.Category));
             return new SuccessResponse();
+        }
+
+        [HttpGet("getNewestEventId")]
+        public GetNewestEventIdResponse GetNewestEventId()
+        {
+            return new GetNewestEventIdResponse { EventId = _eventProvider.GetLastEventId() };
         }
 
         [HttpGet("waitForEvent")]
@@ -285,7 +291,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("verifyCredentials")]
-        public async Task<VerifyCredentialsResponse> VerifyCredentials(VerifyCredentialsRequest request)
+        public async Task<VerifyCredentialsResponse> VerifyCredentials([FromForm] VerifyCredentialsRequest request)
         {
             try
             {
@@ -312,8 +318,8 @@ namespace SimpleChattyServer.Controllers
             return new GetAllTenYearUsersResponse { Users = new List<string>() };
         }
 
-        [HttpGet("getMessages")]
-        public async Task<GetMessagesResponse> GetMessages(GetMessagesRequest request)
+        [HttpPost("getMessages")]
+        public async Task<GetMessagesResponse> GetMessages([FromForm] GetMessagesRequest request)
         {
             var mailbox = MailboxConverter.Parse(request.Folder);
             var messagePage = await _messageParser.GetMessagePage(
@@ -327,8 +333,8 @@ namespace SimpleChattyServer.Controllers
             };
         }
 
-        [HttpGet("getMessageCount")]
-        public async Task<GetMessageCountResponse> GetMessageCount(GetMessageCountRequest request)
+        [HttpPost("getMessageCount")]
+        public async Task<GetMessageCountResponse> GetMessageCount([FromForm] GetMessageCountRequest request)
         {
             var messagePage = await _messageParser.GetMessagePage(
                 Mailbox.Inbox, request.Username, request.Password, 1);
@@ -340,7 +346,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("sendMessage")]
-        public async Task<SuccessResponse> SendMessage(SendMessageRequest request)
+        public async Task<SuccessResponse> SendMessage([FromForm] SendMessageRequest request)
         {
             await _messageParser.SendMessage(request.Username, request.Password, request.To, request.Subject,
                 request.Body);
@@ -348,14 +354,14 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("markMessageRead")]
-        public async Task<SuccessResponse> MarkMessageRead(MarkMessageReadRequest request)
+        public async Task<SuccessResponse> MarkMessageRead([FromForm] MarkMessageReadRequest request)
         {
             await _messageParser.MarkMessageAsRead(request.Username, request.Password, request.MessageId);
             return new SuccessResponse();
         }
 
         [HttpPost("deleteMessage")]
-        public async Task<SuccessResponse> DeleteMessage(DeleteMessageRequest request)
+        public async Task<SuccessResponse> DeleteMessage([FromForm] DeleteMessageRequest request)
         {
             MailboxConverter.Parse(request.Folder); // validate
             await _messageParser.DeleteMessageInFolder(request.Username, request.Password, request.MessageId,
@@ -381,7 +387,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("clientData/setCategoryFilters")]
-        public async Task<SuccessResponse> SetCategoryFilters(SetCategoryFiltersRequest request)
+        public async Task<SuccessResponse> SetCategoryFilters([FromForm] SetCategoryFiltersRequest request)
         {
             await _userDataProvider.UpdateUserData(request.Username,
                 userData =>
@@ -403,7 +409,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("clientData/clearMarkedPosts")]
-        public async Task<SuccessResponse> ClearMarkedPosts(ClearMarkedPostsRequest request)
+        public async Task<SuccessResponse> ClearMarkedPosts([FromForm] ClearMarkedPostsRequest request)
         {
             await _userDataProvider.UpdateUserData(request.Username,
                 userData => userData.MarkedPosts.Clear());
@@ -411,7 +417,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("clientData/markPost")]
-        public async Task<SuccessResponse> MarkPost(MarkPostRequest request)
+        public async Task<SuccessResponse> MarkPost([FromForm] MarkPostRequest request)
         {
             var type = MarkedPostTypeConverter.Parse(request.Type);
             await _userDataProvider.UpdateUserData(request.Username,
@@ -437,7 +443,7 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("clientData/setClientData")]
-        public async Task<SuccessResponse> SetClientData(SetClientDataRequest request)
+        public async Task<SuccessResponse> SetClientData([FromForm] SetClientDataRequest request)
         {
             if (request.Client.Length > 50)
                 throw new Api400Exception("Parameter \"client\" must be at most 50 characters.");

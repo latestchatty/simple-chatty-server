@@ -89,7 +89,7 @@ namespace SimpleChattyServer.Services
                 reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
                     "</div>")))).Trim();
-                reply.Date = ParseDate(StripTags(p.Clip(
+                reply.Date = DateParser.Parse(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
                     "T</div")) + "T");
                 list.Add(reply);
@@ -112,7 +112,7 @@ namespace SimpleChattyServer.Services
             CheckContentId(html);
 
             var p = new Parser(html);
-            p.Seek(1, "<div id=\"main\">");
+            p.Seek(1, "<div class=\"threads\">");
 
             return ParseThreadTree(p, stopAtFullPost: false);
         }
@@ -126,7 +126,7 @@ namespace SimpleChattyServer.Services
             var rootBody = MakeSpoilersClickable(WebUtility.HtmlDecode(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
                 "</div>"))).Trim();
-            var rootDate = ParseDate(StripTags(p.Clip(
+            var rootDate = DateParser.Parse(StripTags(p.Clip(
                 new[] { "<div class=\"postdate\">", ">" },
                 "T</div")) + "T");
 
@@ -320,15 +320,6 @@ namespace SimpleChattyServer.Services
             str = StrReplaceAll("  ", " ", str);
 
             return str;
-        }
-
-        public static DateTimeOffset ParseDate(string str)
-        {
-            // like "Aug 09, 2020 9:33am PDT"
-            var timeZoneAbbreviation = str.Substring(str.Length - 3);
-            var timeZoneOffset = PacificTimeZone.GetOffsetFromAbbreviation(timeZoneAbbreviation);
-            var reformattedDate = str.Substring(0, str.Length - 3) + $"{timeZoneOffset.Hours}:00";
-            return DateTimeOffset.Parse(reformattedDate);
         }
     }
 }

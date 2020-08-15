@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -34,7 +35,9 @@ namespace SimpleChattyServer.Services
                 var pubDateStr = p.Clip(
                     new[] { "<pubDate>", ">" },
                     "</pubDate>");
-                var time = ThreadParser.ParseDate(pubDateStr);
+                var time = DateParser.Parse(pubDateStr);
+                // the time zone offset in this time is a lie. this is really UTC.
+                time = new DateTimeOffset(time.DateTime, TimeSpan.Zero);
                 var description = p.Clip(
                     new[] { "<description><![CDATA[", "CDATA[", "[" },
                     "]]></description>");
@@ -66,7 +69,7 @@ namespace SimpleChattyServer.Services
                 new[] { "<description>", "<p>", ">" },
                 "</p>"));
             p.Seek(1, "<div class=\"article-lead-bottom\">");
-            var date = ThreadParser.ParseDate(p.Clip(
+            var date = DateParser.Parse(p.Clip(
                 new[] { "<time datetime=\"", "\"" },
                 "\">"));
             var body = "<p>" + p.Clip(

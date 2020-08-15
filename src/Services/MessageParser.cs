@@ -81,7 +81,7 @@ namespace SimpleChattyServer.Services
                 message.Subject = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"message-subject\"", ">" },
                     "</span>"));
-                message.Date = V1MessageDateTimeOffsetConverter.Parse(p.Clip(
+                message.Date = DateParser.Parse(p.Clip(
                     new[] { "<span class=\"message-date\"", ">" },
                     "</span>"));
                 message.Body = p.Clip(

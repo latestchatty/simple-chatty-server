@@ -7,7 +7,7 @@ namespace SimpleChattyServer.Data
     {
         public int EventId { get; set; }
         [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset EventDate { get; set; }
-        public EventType EventType { get; set; }
-        public EventDataModel EventData { get; set; }
+        [JsonConverter(typeof(EventTypeConverter))] public EventType EventType { get; set; }
+        [JsonConverter(typeof(EventDataModelConverter))] public EventDataModel EventData { get; set; }
     }    
 }

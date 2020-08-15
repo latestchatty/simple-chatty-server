@@ -75,7 +75,7 @@ namespace SimpleChattyServer.Services
                     action(userData);
 
                     using (var stream = File.Create(filePath))
-                        JsonSerializer.SerializeAsync(stream, userData).Wait();
+                        JsonSerializer.SerializeAsync(stream, userData).GetAwaiter().GetResult();
                 }
                 finally
                 {

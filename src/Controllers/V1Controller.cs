@@ -12,20 +12,23 @@ using Microsoft.AspNetCore.Authorization;
 using System.Net.Http.Headers;
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace SimpleChattyServer.Controllers
 {
     [ApiController, Route("chatty")]
     public sealed class V1Controller : ControllerBase
     {
+        private readonly ILogger _logger;
         private readonly ChattyProvider _chattyProvider;
         private readonly SearchParser _searchParser;
         private readonly FrontPageParser _frontPageParser;
         private readonly MessageParser _messageParser;
 
-        public V1Controller(ChattyProvider chattyProvider, SearchParser searchParser, FrontPageParser frontPageParser,
-            MessageParser messageParser)
+        public V1Controller(ILogger<V1Controller> logger, ChattyProvider chattyProvider, SearchParser searchParser,
+            FrontPageParser frontPageParser, MessageParser messageParser)
         {
+            this._logger = logger;
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
             _frontPageParser = frontPageParser;
@@ -148,11 +151,14 @@ namespace SimpleChattyServer.Controllers
             return await _frontPageParser.GetArticle(storyId);
         }
 
-        [HttpPost("messages.json"), Authorize]
+        [HttpGet("messages.json")]
         public async Task<V1MessagesResponse> Messages()
         {
-            var (username, password) = GetBasicAuthorization();
-            var messagePage = await _messageParser.GetMessagePage(Mailbox.Inbox, username, password, 1);
+            var auth = GetBasicAuthorization();
+            if (!auth.HasValue)
+                return null;
+            var messagePage = await _messageParser.GetMessagePage(Mailbox.Inbox, auth.Value.Username,
+                auth.Value.Password, 1);
             var list = (
                 from x in messagePage.Messages
                 select new V1MessagesResponse.Message
@@ -167,38 +173,45 @@ namespace SimpleChattyServer.Controllers
                 }).ToList();
             return new V1MessagesResponse
             {
-                User = username,
+                User = auth.Value.Username,
                 Messages = list
             };
         }
 
-        [HttpPost("messages/{id}.json")]
+        [HttpPut("messages/{id}.json")]
         public async Task<ContentResult> MarkMessageRead(int id)
         {
-            var (username, password) = GetBasicAuthorization();
-            await _messageParser.MarkMessageAsRead(username, password, id);
+            var auth = GetBasicAuthorization();
+            if (!auth.HasValue)
+                return Content("", "text/plain");
+            await _messageParser.MarkMessageAsRead(auth.Value.Username, auth.Value.Password, id);
             return Content("ok", "text/plain");
         }
 
         [HttpPost("messages/send")]
-        public async Task<ContentResult> SendMessage(V1SendMessageRequest request)
+        public async Task<ContentResult> SendMessage([FromForm] V1SendMessageRequest request)
         {
-            var (username, password) = GetBasicAuthorization();
-            await _messageParser.SendMessage(username, password, request.To, request.Subject, request.Body);
+            var auth = GetBasicAuthorization();
+            if (!auth.HasValue)
+                return Content("", "text/plain");
+            await _messageParser.SendMessage(auth.Value.Username, auth.Value.Password, request.To, request.Subject,
+                request.Body);
             return Content("OK", "text/plain");
         }
 
         [HttpPost("post")]
-        public async Task<ContentResult> Post(V1PostRequest request)
+        public async Task<ContentResult> Post([FromForm] V1PostRequest request)
         {
-            var (username, password) = GetBasicAuthorization();
-            await _chattyProvider.Post(username, password,
+            var auth = GetBasicAuthorization();
+            if (!auth.HasValue)
+                return Content("", "text/plain");
+            await _chattyProvider.Post(auth.Value.Username, auth.Value.Password,
                 string.IsNullOrWhiteSpace(request.Parent_id) ? 0 : int.Parse(request.Parent_id),
                 request.Body);
             return Content("", "text/plain");
         }
 
-        private (string Username, string Password) GetBasicAuthorization()
+        private (string Username, string Password)? GetBasicAuthorization()
         {
             if (Request.Headers.TryGetValue("Authorization", out var headerValue))
             {
@@ -213,7 +226,9 @@ namespace SimpleChattyServer.Controllers
                 }
             }
 
-            throw new Api400Exception("Basic authentication required.");
+            Response.StatusCode = 401;
+            Response.Headers["WWW-Authenticate"] = "Basic realm=\"Shacknews\", charset=\"UTF-8\"";
+            return null;
         }
 
         private V1PageModel GetChattyPage(int page)

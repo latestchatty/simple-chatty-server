@@ -52,7 +52,7 @@ namespace SimpleChattyServer.Services
                 result.Author = p.Clip(
                     new[] { "<span class=\"chatty-author\">", "<a class=\"more\"", ">" },
                     ":</a></span>");
-                result.Date = DateTimeOffset.Parse(p.Clip(
+                result.Date = DateParser.Parse(p.Clip(
                     new[] { "<span class=\"postdate\"", ">", " " },
                     "</span>"));
                 result.Id = int.Parse(p.Clip(

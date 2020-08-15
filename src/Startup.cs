@@ -19,6 +19,7 @@ namespace SimpleChattyServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddResponseCompression();
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
             services.Configure<UserDataOptions>(Configuration.GetSection(UserDataOptions.SectionName));
             services.AddSingleton<ChattyProvider>();
@@ -39,8 +40,14 @@ namespace SimpleChattyServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseResponseCompression();
             app.UseRouting();
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
+            app.UseEndpoints(
+                endpoints =>
+                {
+                    endpoints.MapControllers();
+                    endpoints.MapDefaultControllerRoute();
+                });
         }
     }
 }
