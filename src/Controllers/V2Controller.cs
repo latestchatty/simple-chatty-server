@@ -448,6 +448,49 @@ namespace SimpleChattyServer.Controllers
             return new SuccessResponse();
         }
 
+        [HttpGet("notifications/generateId")]
+        public NotificationsGenerateIdResponse NotificationsGenerateId()
+        {
+            return new NotificationsGenerateIdResponse { Id = Guid.NewGuid().ToString() };
+        }
+
+        [HttpPost("notifications/registerNotifierClient")]
+        public SuccessResponse NotificationsRegisterNotifierClient()
+        {
+            return new SuccessResponse();
+        }
+
+        [HttpPost("notifications/registerRichClient")]
+        public SuccessResponse NotificationsRegisterRichClient()
+        {
+            return new SuccessResponse();
+        }
+
+        [HttpPost("notifications/detachAccount")]
+        public SuccessResponse NotificationsDetachAccount()
+        {
+            return new SuccessResponse();
+        }
+
+        [HttpPost("notifications/waitForNotification")]
+        public async Task<ContentResult> NotificationsWaitForNotification()
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5));
+            throw new Api500Exception("Notifications are not implemented on this server.");
+        }
+
+        [HttpPost("notifications/getUserSetup")]
+        public NotificationsGetUserSetupResponse NotificationsGetUserSetup()
+        {
+            return new NotificationsGetUserSetupResponse();
+        }
+
+        [HttpPost("notifications/setUserSetup")]
+        public SuccessResponse NotificationsSetUserSetup()
+        {
+            return new SuccessResponse();
+        }
+
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
         {
             if (min == 0 && (input == "" || input == null))

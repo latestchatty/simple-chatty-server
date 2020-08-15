@@ -46,6 +46,14 @@
   - [POST /v2/clientData/markPost](#post-v2clientdatamarkpost)
   - [GET /v2/clientData/getClientData](#get-v2clientdatagetclientdata)
   - [POST /v2/clientData/setClientData](#post-v2clientdatasetclientdata)
+- [Notifications](#notifications)
+  - [GET /v2/notifications/generateId](#get-v2notificationsgenerateid)
+  - [POST /v2/notifications/registerNotifierClient](#post-v2notificationsregisternotifierclient)
+  - [POST /v2/notifications/registerRichClient](#post-v2notificationsregisterrichclient)
+  - [POST /v2/notifications/detachAccount](#post-v2notificationsdetachaccount)
+  - [POST /v2/notifications/waitForNotification](#post-v2notificationswaitfornotification)
+  - [POST /v2/notifications/getUserSetup](#post-v2notificationsgetusersetup)
+  - [POST /v2/notifications/setUserSetup](#post-v2notificationssetusersetup)
 - [Legacy v1 API](#legacy-v1-api)
   - [Data Types (v1)](#data-types-v1)
   - [Error Responses (v1)](#error-responses-v1)
@@ -768,6 +776,100 @@ Parameters:
 - `data=[STR,100000]` - Client-specified data.  I recommend Base64-encoding this data.  Maximum: 100,000 bytes.
 
 Response
+```
+{
+   "result": "success"
+}
+```
+
+## Notifications
+This API is a non-functional stub. It returns just enough fake data to keep existing clients from spamming the server with requests.
+
+### GET /v2/notifications/generateId
+**Deprecated.** Generates a GUID.
+
+Parameters:
+- None.
+
+Response:
+```
+{
+   "id": [STR]
+}
+```
+
+### POST /v2/notifications/registerNotifierClient
+**Deprecated.** Does nothing and returns success.
+
+Parameters:
+- None.
+
+Response:
+```
+{
+   "result": "success"
+}
+```
+
+### POST /v2/notifications/registerRichClient
+**Deprecated.** Does nothing and returns success.
+
+Parameters:
+- None.
+
+Response:
+```
+{
+   "result": "success"
+}
+```
+
+### POST /v2/notifications/detachAccount
+**Deprecated.** Does nothing and returns success.
+
+Parameters:
+- None.
+
+Response:
+```
+{
+   "result": "success"
+}
+```
+
+### POST /v2/notifications/waitForNotification
+**Deprecated.** Waits five minutes and then returns an error.
+
+Parameters:
+- None.
+
+Response: (none)
+
+Errors:
+- `ERR_SERVER`
+
+### POST /v2/notifications/getUserSetup
+**Deprecated.** Always returns the same default response.
+
+Parameters:
+- None.
+
+Response:
+```
+{
+   "triggerOnReply": [BIT],
+   "triggerOnMention": [BIT],
+   "triggerKeywords": [STR*]
+}
+```
+
+### POST /v2/notifications/setUserSetup
+**Deprecated.** Does nothing and returns success.
+
+Parameters:
+- None.
+
+Response:
 ```
 {
    "result": "success"
