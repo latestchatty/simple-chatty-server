@@ -65,8 +65,8 @@
   - [GET /chatty/stories.json](#get-chattystoriesjson)
   - [GET /chatty/stories/`[INT]`.json](#get-chattystoriesintjson)
   - [GET /chatty/stories/`[INT]`.`[INT]`.json](#get-chattystoriesintintjson)
-  - [POST /chatty/messages.json](#post-chattymessagesjson)
-  - [POST /chatty/messages/`[INT]`.json](#post-chattymessagesintjson)
+  - [GET /chatty/messages.json](#get-chattymessagesjson)
+  - [PUT /chatty/messages/`[INT]`.json](#put-chattymessagesintjson)
   - [POST /chatty/messages/send/](#post-chattymessagessend)
   - [POST /chatty/post/](#post-chattypost)
 
