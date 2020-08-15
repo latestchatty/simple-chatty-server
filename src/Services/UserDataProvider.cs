@@ -101,7 +101,7 @@ namespace SimpleChattyServer.Services
             var str = sb.ToString();
             if (str.Length > 100)
                 str = str.Substring(0, 100);
-            return Path.Combine(_storageOptions.Path, str);
+            return Path.Combine(_storageOptions.DataPath, str);
         }
     }
 }

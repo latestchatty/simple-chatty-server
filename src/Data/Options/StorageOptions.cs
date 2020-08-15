@@ -4,6 +4,7 @@ namespace SimpleChattyServer.Data.Options
     {
         public const string SectionName = "Storage";
 
-        public string Path { get; set; }
+        public string DataPath { get; set; }
+        public string LogPath { get; set; }
     }
 }

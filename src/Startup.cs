@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data.Options;
 using SimpleChattyServer.Services;
 
@@ -27,7 +29,7 @@ namespace SimpleChattyServer
             var storageSection = Configuration.GetSection(StorageOptions.SectionName);
             if (this.Environment.IsProduction())
                 services.AddLettuceEncrypt().PersistDataToDirectory(
-                    new DirectoryInfo(storageSection.GetValue<string>("Path")), null);
+                    new DirectoryInfo(storageSection.GetValue<string>("DataPath")), null);
             services.AddResponseCompression();
             services.AddCors(cors =>
                 cors.AddDefaultPolicy(
@@ -50,8 +52,10 @@ namespace SimpleChattyServer
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory,
+            IOptions<StorageOptions> storageOptions)
         {
+            loggerFactory.AddFile(Path.Combine(storageOptions.Value.LogPath, "{Date}.log"));
             app.UseResponseCompression();
             app.UseCors();
             app.UseRouting();
