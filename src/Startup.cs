@@ -27,7 +27,7 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             var storageSection = Configuration.GetSection(StorageOptions.SectionName);
-            if (this.Environment.IsProduction())
+            if (Environment.IsProduction())
                 services.AddLettuceEncrypt().PersistDataToDirectory(
                     new DirectoryInfo(storageSection.GetValue<string>("DataPath")), null);
             services.AddResponseCompression();
