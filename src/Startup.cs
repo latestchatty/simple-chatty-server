@@ -48,7 +48,8 @@ namespace SimpleChattyServer
             services.AddSingleton<ThreadParser>();
             services.AddSingleton<UserDataProvider>();
             services.AddHostedService<ScrapeService>();
-            services.AddControllers();
+            services.AddControllers(options =>
+                options.Filters.Add(new HttpResponseExceptionFilter()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
