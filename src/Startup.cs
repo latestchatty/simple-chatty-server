@@ -20,6 +20,9 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddResponseCompression();
+            services.AddCors(cors =>
+                cors.AddDefaultPolicy(
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
             services.Configure<UserDataOptions>(Configuration.GetSection(UserDataOptions.SectionName));
             services.AddSingleton<ChattyProvider>();
@@ -41,6 +44,7 @@ namespace SimpleChattyServer
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseResponseCompression();
+            app.UseCors();
             app.UseRouting();
             app.UseEndpoints(
                 endpoints =>
