@@ -1001,17 +1001,6 @@ Type | Description
 >}
 >```
 
-### Error Responses (v1)
-Errors are reported using the following JSON structure.
-
-```
-{
-   "faultCode": "AMFPHP_RUNTIME_ERROR", 
-   "faultString": [STR], // error message
-   "faultDetail": [STR] // source path and line
-}
-```
-
 ### GET /chatty/about
 **Deprecated.** Gets an HTML page with information about the server.
 
