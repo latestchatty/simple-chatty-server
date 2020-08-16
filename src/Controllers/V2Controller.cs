@@ -183,10 +183,10 @@ namespace SimpleChattyServer.Controllers
             string terms = "", string author = "", string parentAuthor = "", string category = "", int offset = 0,
             int limit = 35, bool oldestFirst = false)
         {
-            terms = terms.Trim();
-            author = author.Trim();
-            parentAuthor = parentAuthor.Trim();
-            category = category.Trim();
+            terms = terms?.Trim() ?? "";
+            author = author?.Trim() ?? "";
+            parentAuthor = parentAuthor?.Trim() ?? "";
+            category = category?.Trim() ?? "";
             
             if (limit > 500)
                 throw new Api400Exception("The \"limit\" argument must be 500 or lower.");
