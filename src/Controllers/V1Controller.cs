@@ -85,7 +85,7 @@ namespace SimpleChattyServer.Controllers
                         Date = post.Date,
                         Category = post.Category,
                         Author = post.Author,
-                        Preview = ThreadParser.PreviewFromBody(op.Body),
+                        Preview = ThreadParser.PreviewFromBody(post.Body),
                         Id = $"{post.Id}"
                     };
                 commentsById[post.Id] = v1CommentModel;
