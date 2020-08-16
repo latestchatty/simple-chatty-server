@@ -58,7 +58,6 @@
   - [POST /v2/notifications/setUserSetup](#post-v2notificationssetusersetup)
 - [Legacy v1 API](#legacy-v1-api)
   - [Data Types (v1)](#data-types-v1)
-  - [Error Responses (v1)](#error-responses-v1)
   - [GET /chatty/about](#get-chattyabout)
   - [GET /chatty/index.json](#get-chattyindexjson)
   - [GET /chatty/`[INT]`.`[INT]`.json](#get-chattyintintjson)
