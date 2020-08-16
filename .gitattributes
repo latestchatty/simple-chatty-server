@@ -1,0 +1,7 @@
+* text=auto
+*.json text eol=lf
+*.cs text eol=lf
+*.csproj text eol=lf
+*.md text eol=lf
+*.tf text eol=lf
+*.sh text eol=lf
