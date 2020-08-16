@@ -56,7 +56,6 @@ namespace SimpleChattyServer
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory,
             IOptions<StorageOptions> storageOptions)
         {
-            loggerFactory.AddFile(Path.Combine(storageOptions.Value.LogPath, "{Date}.log"));
             app.UseResponseCompression();
             app.UseCors();
             app.UseRouting();
