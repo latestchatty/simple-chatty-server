@@ -1,6 +1,6 @@
 # SimpleChattyServer
 
-This service powers `winchatty.com`.
+This service powers `winchatty.com`. [View the API documentation](https://github.com/latestchatty/simple-chatty-server/blob/master/doc/api.md).
 
 ## Development
 
