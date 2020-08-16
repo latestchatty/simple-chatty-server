@@ -18,7 +18,7 @@ namespace SimpleChattyServer.Services
                 return "";
 
             var bytes = _utf8Encoding.GetBytes(html);
-            var stringBuilder = new List<byte>();
+            var convertedBytes = new List<byte>();
             var offset = 0;
 
             while (offset >= 0 && offset < bytes.Length)
@@ -28,15 +28,15 @@ namespace SimpleChattyServer.Services
                 {
                     var entity = $"&#{decValue};";
                     foreach (var ch in _utf8Encoding.GetBytes(entity))
-                        stringBuilder.Add(ch);
+                        convertedBytes.Add(ch);
                 }
                 else
                 {
-                    stringBuilder.Add((byte)decValue);
+                    convertedBytes.Add((byte)decValue);
                 }
             }
 
-            return _utf8Encoding.GetString(bytes);
+            return _utf8Encoding.GetString(convertedBytes.ToArray());
         }
 
         private static uint ReadUnicodeCodePoint(byte[] utf8Bytes, ref int offset)

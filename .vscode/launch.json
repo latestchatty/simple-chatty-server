@@ -16,7 +16,8 @@
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            }
+            },
+            "requireExactSource": true
         },
         {
             "name": ".NET Core Attach",
