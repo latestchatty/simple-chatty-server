@@ -12,8 +12,8 @@ namespace SimpleChattyServer.Services
 {
     public sealed class ThreadParser
     {
+        private static readonly Regex _stripTagsRegex = new Regex("<[^>]*(>|$)", RegexOptions.Compiled);
         private readonly DownloadService _downloadService;
-        private readonly Regex _stripTagsRegex = new Regex("<[^>]*(>|$)", RegexOptions.Compiled);
 
         public ThreadParser(DownloadService downloadService)
         {
@@ -155,9 +155,6 @@ namespace SimpleChattyServer.Services
                 reply.Id = int.Parse(p.Clip(
                     new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" },
                     "\""));
-                reply.Preview = RemoveSpoilers(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
-                    new[] { "<span class=\"oneline_body\">", ">" },
-                    "</span> : </a><span class=\"oneline_user \"")))).Trim();
                 reply.Author = WebUtility.HtmlDecode(p.Clip(
                     new[] { "<span class=\"oneline_user", ">" },
                     "</span>"));
@@ -222,7 +219,7 @@ namespace SimpleChattyServer.Services
             return (contentTypeId, contentId);
         }
 
-        private string PreviewFromBody(string body) =>
+        public static string PreviewFromBody(string body) =>
             StripTags(CollapseWhitespace(
                 RemoveSpoilers(body)
                 .Replace("<br />", " ")
@@ -298,7 +295,7 @@ namespace SimpleChattyServer.Services
         private static string MakeSpoilersClickable(string text) =>
             text.Replace("return doSpoiler(event);", "this.className = '';");
 
-        private string StripTags(string html) =>
+        private static string StripTags(string html) =>
             _stripTagsRegex.Replace(html, "");
 
         private static string StrReplaceAll(string needle, string replacement, string haystack)

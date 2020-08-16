@@ -4,11 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SimpleChattyServer.Data;
-using SimpleChattyServer.Exceptions;
 using SimpleChattyServer.Data.Requests;
 using SimpleChattyServer.Data.Responses;
 using SimpleChattyServer.Services;
-using Microsoft.AspNetCore.Authorization;
 using System.Net.Http.Headers;
 using System.Net;
 using System.Text;
@@ -73,7 +71,7 @@ namespace SimpleChattyServer.Controllers
                         Category = op.Category,
                         LastReplyId = $"{chattyThread.Posts.Max(x => x.Id)}",
                         Author = op.Author,
-                        Preview = op.Preview,
+                        Preview = ThreadParser.PreviewFromBody(op.Body),
                         Id = $"{op.Id}"
                     };
             foreach (var post in chattyThread.Posts.Skip(1))
@@ -87,7 +85,7 @@ namespace SimpleChattyServer.Controllers
                         Date = post.Date,
                         Category = post.Category,
                         Author = post.Author,
-                        Preview = post.Preview,
+                        Preview = ThreadParser.PreviewFromBody(op.Body),
                         Id = $"{post.Id}"
                     };
                 commentsById[post.Id] = v1CommentModel;
@@ -242,8 +240,12 @@ namespace SimpleChattyServer.Controllers
                 .Skip((page - 1) * threadsPerPage)
                 .Take(threadsPerPage))
             {
+                var maxDepth = chattyThread.Posts.Max(x => x.Depth);
+                var lastIdAtDepth = new int[maxDepth + 1];
+                var replyCommentById = new Dictionary<int, V1CommentModel>();
                 var op = chattyThread.Posts[0];
-                list.Add(
+                lastIdAtDepth[0] = op.Id;
+                var v1RootCommentModel =
                     new V1RootCommentModel
                     {
                         Comments = new List<V1CommentModel>(),
@@ -254,10 +256,33 @@ namespace SimpleChattyServer.Controllers
                         Category = op.Category,
                         LastReplyId = $"{chattyThread.Posts.Max(x => x.Id)}",
                         Author = op.Author,
-                        Preview = op.Preview,
+                        Preview = ThreadParser.PreviewFromBody(op.Body),
                         Id = $"{op.Id}"
-                    });
+                    };
+                list.Add(v1RootCommentModel);
+                foreach (var chattyPost in chattyThread.Posts.Skip(1))
+                {
+                    lastIdAtDepth[chattyPost.Depth] = chattyPost.Id;
+                    var v1CommentModel =
+                        new V1CommentModel
+                        {
+                            Comments = new List<V1CommentModel>(),
+                            Body = chattyPost.Body,
+                            Date = chattyPost.Date,
+                            Category = chattyPost.Category,
+                            Author = chattyPost.Author,
+                            Preview = ThreadParser.PreviewFromBody(chattyPost.Body),
+                            Id = $"{chattyPost.Id}"
+                        };
+                    replyCommentById[chattyPost.Id] = v1CommentModel;
+                    var parentId = lastIdAtDepth[chattyPost.Depth - 1];
+                    if (parentId == op.Id)
+                        v1RootCommentModel.Comments.Add(v1CommentModel);
+                    else
+                        replyCommentById[parentId].Comments.Add(v1CommentModel);
+                }
             }
+
             return new V1PageModel
             {
                 Comments = list,
