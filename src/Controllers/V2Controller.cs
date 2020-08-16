@@ -470,6 +470,49 @@ namespace SimpleChattyServer.Controllers
             return new SuccessResponse();
         }
 
+        [HttpGet("clientData/getReadStatus")]
+        public async Task<GetReadStatusResponse> GetReadStatus(string username)
+        {
+            var chatty = _chattyProvider.GetChatty();
+            var userData = await _userDataProvider.GetUserData(username);
+            return new GetReadStatusResponse
+            {
+                Threads = (
+                    from pair in userData.LastReadPostByThreadId
+                    where chatty.ThreadsByRootId.ContainsKey(pair.Key)
+                    select new GetReadStatusResponse.Thread
+                    {
+                        ThreadId = pair.Key,
+                        LastReadPostId = pair.Value
+                    }).ToList()
+            };
+        }
+
+        [HttpPost("clientData/setReadStatus")]
+        public async Task<SuccessResponse> SetReadStatus([FromForm] SetReadStatusRequest request)
+        {
+            var chatty = _chattyProvider.GetChatty();
+            await _userDataProvider.UpdateUserData(request.Username,
+                userData =>
+                {
+                    if (request.ThreadId == 0)
+                    {
+                        foreach (var threadId in chatty.ThreadsByRootId.Keys)
+                            userData.LastReadPostByThreadId[threadId] = request.LastReadPostId;
+                    }
+                    else
+                    {
+                        if (chatty.ThreadsByRootId.ContainsKey(request.ThreadId))
+                            userData.LastReadPostByThreadId[request.ThreadId] = request.LastReadPostId;
+                    }
+
+                    foreach (var threadId in userData.LastReadPostByThreadId.Keys.ToList())
+                        if (!chatty.ThreadsByRootId.ContainsKey(threadId))
+                            userData.LastReadPostByThreadId.Remove(threadId);
+                });
+            return new SuccessResponse();
+        }
+
         [HttpGet("notifications/generateId")]
         public NotificationsGenerateIdResponse NotificationsGenerateId()
         {

@@ -77,10 +77,8 @@ namespace SimpleChattyServer.Services
 
                 var lolCounts = await _lolParser.DownloadChattyLolCounts();
 
-                var events = await _eventProvider.CreateNewEvents(newChatty, lolCounts);
-
                 _chattyProvider.Update(newChatty, lolCounts);
-                _eventProvider.Update(newChatty, lolCounts, events);
+                await _eventProvider.Update(newChatty, lolCounts);
 
                 _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}");
             }

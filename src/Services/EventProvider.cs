@@ -11,11 +11,11 @@ namespace SimpleChattyServer.Services
     public sealed class EventProvider
     {
         private const int MAX_EVENTS = 10_000;
+
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly List<EventModel> _events = new List<EventModel>(MAX_EVENTS);
         private Chatty _chatty;
         private ChattyLolCounts _chattyLolCounts;
-
-        private readonly List<EventModel> _events = new List<EventModel>(MAX_EVENTS);
-        private readonly ReaderWriterLockSlim _eventsLock = new ReaderWriterLockSlim();
 
         private readonly ThreadParser _threadParser;
 
@@ -24,20 +24,20 @@ namespace SimpleChattyServer.Services
             _threadParser = threadParser;
         }
 
-        public async Task<List<EventModel>> CreateNewEvents(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
+        public async Task Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
         {
-            if (_chatty == null || _chattyLolCounts == null)
+            await Task.Run(() =>
             {
-                _chatty = newChatty;
-                _chattyLolCounts = newChattyLolCounts;
-                return new List<EventModel>();
-            }
-
-            return await Task.Run(() =>
-            {
-                _eventsLock.EnterReadLock();
+                _lock.EnterWriteLock();
                 try
                 {
+                    if (_chatty == null || _chattyLolCounts == null)
+                    {
+                        _chatty = newChatty;
+                        _chattyLolCounts = newChattyLolCounts;
+                        return;
+                    }
+
                     var nextEventId = _events.Count == 0 ? 1 : _events.Last().EventId + 1;
                     var newEvents = new List<EventModel>();
 
@@ -189,39 +189,68 @@ namespace SimpleChattyServer.Services
                                         }
                                     });
                             }
+
+                            if (oldPost.Author != newPost.Author || oldPost.Body != newPost.Body)
+                            {
+                                newEvents.Add(
+                                    new EventModel
+                                    {
+                                        EventId = nextEventId++,
+                                        EventDate = DateTimeOffset.Now,
+                                        EventType = EventType.PostChange,
+                                        EventData = new PostChangeEventDataModel
+                                        {
+                                            PostId = newPost.Id
+                                        }
+                                    });
+                            }
                         }
                     }
 
-                    return newEvents;
+                    _chatty = newChatty;
+                    _chattyLolCounts = newChattyLolCounts;
+                    _events.AddRange(newEvents);
+
+                    while (_events.Count > MAX_EVENTS)
+                        _events.RemoveAt(0);
                 }
                 finally
                 {
-                    _eventsLock.ExitReadLock();
+                    _lock.ExitWriteLock();
                 }
             });
         }
 
-        public void Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts, List<EventModel> newEvents)
+        public async Task SendReadStatusUpdateEvent(string username)
         {
-            _eventsLock.EnterWriteLock();
-            try
+            await Task.Run(() =>
             {
-                _chatty = newChatty;
-                _chattyLolCounts = newChattyLolCounts;
-                _events.AddRange(newEvents);
+                _lock.EnterWriteLock();
+                try
+                {
+                    _events.Add(
+                        new EventModel
+                        {
+                            EventId = _events.Count == 0 ? 1 : _events.Last().EventId + 1,
+                            EventDate = DateTimeOffset.Now,
+                            EventType = EventType.ReadStatusUpdate,
+                            EventData = new ReadStatusUpdateEventDataModel
+                            {
+                                Username = username
+                            }
+                        });
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            });
 
-                while (_events.Count > MAX_EVENTS)
-                    _events.RemoveAt(0);
-            }
-            finally
-            {
-                _eventsLock.ExitWriteLock();
-            }
         }
 
         public List<EventModel> GetEvents(int lastEventId)
         {
-            _eventsLock.EnterReadLock();
+            _lock.EnterReadLock();
             try
             {
                 var firstEventId = _events.Count == 0 ? 0 : _events[0].EventId;
@@ -237,20 +266,20 @@ namespace SimpleChattyServer.Services
             }
             finally
             {
-                _eventsLock.ExitReadLock();
+                _lock.ExitReadLock();
             }
         }
 
         public int GetLastEventId()
         {
-            _eventsLock.EnterReadLock();
+            _lock.EnterReadLock();
             try
             {
                 return _events.Count == 0 ? 0 : _events.Last().EventId;
             }
             finally
             {
-                _eventsLock.ExitReadLock();
+                _lock.ExitReadLock();
             }
         }
 

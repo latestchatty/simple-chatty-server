@@ -11,5 +11,6 @@ namespace SimpleChattyServer.Data
         public bool FilterInformative { get; set; } = true;
         public List<MarkedPostModel> MarkedPosts { get; set; } = new List<MarkedPostModel>();
         public Dictionary<string, string> ClientData { get; set; } = new Dictionary<string, string>();
+        public Dictionary<int, int> LastReadPostByThreadId { get; set; } = new Dictionary<int, int>();
     }
 }

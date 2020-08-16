@@ -4,6 +4,8 @@ namespace SimpleChattyServer.Data
     {
         NewPost,
         CategoryChange,
-        LolCountsUpdate
+        LolCountsUpdate,
+        ReadStatusUpdate,
+        PostChange
     }
 }

@@ -46,6 +46,8 @@
   - [POST /v2/clientData/markPost](#post-v2clientdatamarkpost)
   - [GET /v2/clientData/getClientData](#get-v2clientdatagetclientdata)
   - [POST /v2/clientData/setClientData](#post-v2clientdatasetclientdata)
+  - [GET /v2/clientData/getReadStatus](#get-v2clientdatagetreadstatus)
+  - [POST /v2/clientData/setReadStatus](#post-v2clientdatasetreadstatus)
 - [Notifications](#notifications)
   - [GET /v2/notifications/generateId](#get-v2notificationsgenerateid)
   - [POST /v2/notifications/registerNotifierClient](#post-v2notificationsregisternotifierclient)
@@ -153,12 +155,15 @@ Type | Description
 >- `"newPost"` - data will be `[E_NEWP]`
 >- `"categoryChange"` - data will be `[E_CATC]`
 >- `"lolCountsUpdate"` - data will be `[E_LOLS]`
+>- `"readStatusUpdate"` - data will be `[E_READ]`
+>- `"postChange"` - data will be `[E_CHGP]`
 
 `[E_DATA]` - Event-specific data.  Abstract base type which may be any one of the following concrete types:
 >- `[E_NEWP]` - new post
 >- `[E_CATC]` - category change
->- `[E_SMSG]` - server message
 >- `[E_LOLS]` - tag counts update
+>- `[E_READ]` - thread read status update
+>- `[E_CHGP]` - post author/body change (i.e. the user deleted their account)
 
 `[E_NEWP]` - New post event data.
 >```
@@ -177,14 +182,7 @@ Type | Description
 >}
 >```
 
-`[E_SMSG]` - Server message event data.
->```
->{
->   "message": [STR]
->}
->```
-
-`[E_LOLS]` - ShackLOL tag counts update.  Only tag counts that have changed are included.
+`[E_LOLS]` - ShackLOL tag counts update. All tags on the post are included.
 >```
 >{
 >   "updates":
@@ -196,6 +194,20 @@ Type | Description
 >      },
 >      ...
 >   ]
+>}
+>```
+
+`[E_READ]` - Read status update event data.
+>```
+>{
+>   "username": [STR]
+>}
+>```
+
+`[E_CHGP]` - Post change event data.
+>```
+>{
+>   "postId": [INT]
 >}
 >```
 
@@ -776,6 +788,40 @@ Parameters:
 - `data=[STR,100000]` - Client-specified data.  I recommend Base64-encoding this data.  Maximum: 100,000 bytes.
 
 Response
+```
+{
+   "result": "success"
+}
+```
+
+### GET /v2/clientData/getReadStatus
+Gets the newest post ID that the user has read in each thread of the active chatty. The last read post ID is not necessarily a post that is actually in the thread, but is simply a threshold where posts below that number have been read.
+
+Parameters:
+- `username=[STR]` - Username.
+
+Response
+```
+{
+   "threads":
+   [
+      {
+         "threadId": [INT],
+         "lastReadPostId": [INT]
+      }
+   ]
+}
+```
+
+### POST /v2/clientData/setReadStatus
+Sets the last post ID that the user has read in a single thread.
+
+Parameters:
+- `username=[STR]` - Username.
+- `threadId=[INT]` - Thread ID, or zero to apply to all active threads.
+- `lastReadPostId=[INT]` - Last read post ID in the specified thread.
+
+Response:
 ```
 {
    "result": "success"
