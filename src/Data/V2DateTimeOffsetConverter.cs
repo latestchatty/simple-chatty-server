@@ -10,6 +10,6 @@ namespace SimpleChattyServer.Data
             throw new NotImplementedException();
 
         public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options) =>
-            writer.WriteStringValue($"{value.UtcDateTime:yyyy-MM-ddTHH:mm:ss.fffZ}");
+            writer.WriteStringValue($"{value.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}");
     }
 }

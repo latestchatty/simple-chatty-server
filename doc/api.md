@@ -96,7 +96,7 @@ Type | Description
 `[INT]` | Unsigned 31-bit decimal integer (range 0..2147483647).  No leading zeroes.
 `[BIT]` | `true` or `false`
 `[STR]` | String
-`[DAT]` | Combined date and time, represented as a strict subset of RFC 3339, which is itself a strict subset of ISO 8601.  Dates in JSON responses will always be formatted exactly like this: `"2013-12-01T19:39:00.000Z"`.  The time is in the UTC time zone.  Make sure to convert all `[DAT]` values to the user's local time zone before displaying!
+`[DAT]` | Combined date and time, represented as a strict subset of RFC 3339, which is itself a strict subset of ISO 8601.  Dates in JSON responses will always be formatted exactly like this: `"2013-12-01T19:39:00Z"`.  The time is in the UTC time zone.  Make sure to convert all `[DAT]` values to the user's local time zone before displaying!
 `[MOD]` | Moderation flag enum.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"`
 `[MODN]` | Moderation flag enum, including "nuked".  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"` `"nuked"`
 `[MBX]` | Mailbox enum.  One of the following strings: `"inbox"` `"sent"`
