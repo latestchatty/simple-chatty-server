@@ -74,8 +74,6 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Introduction
-This documents the WebChatty API, a backend web service for a chatty-style forum.
-
 This API implements a subset of versions 1 and 2 of the WinChatty API, allowing it to support preexisting clients of that API.
 
 ### Protocols
