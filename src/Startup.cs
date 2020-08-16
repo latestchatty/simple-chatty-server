@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using LettuceEncrypt;
 using Microsoft.AspNetCore.Builder;
@@ -5,8 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data.Options;
 using SimpleChattyServer.Services;
 
@@ -27,9 +26,12 @@ namespace SimpleChattyServer
         public void ConfigureServices(IServiceCollection services)
         {
             var storageSection = Configuration.GetSection(StorageOptions.SectionName);
+            var dataPath = storageSection.GetValue<string>("DataPath");
+            if (string.IsNullOrWhiteSpace(dataPath) || !Directory.Exists(dataPath))
+                throw new Exception("Must configure DataPath.");
             if (Environment.IsProduction())
                 services.AddLettuceEncrypt().PersistDataToDirectory(
-                    new DirectoryInfo(storageSection.GetValue<string>("DataPath")), null);
+                    new DirectoryInfo(dataPath), null);
             services.AddResponseCompression(
                 options => options.EnableForHttps = true);
             services.AddCors(
@@ -49,13 +51,12 @@ namespace SimpleChattyServer
             services.AddSingleton<ThreadParser>();
             services.AddSingleton<UserDataProvider>();
             services.AddHostedService<ScrapeService>();
-            services.AddControllers(options =>
-                options.Filters.Add(new HttpResponseExceptionFilter()));
+            services.AddControllers(
+                options => options.Filters.Add(new HttpResponseExceptionFilter()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory,
-            IOptions<StorageOptions> storageOptions)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseResponseCompression();
             app.UseCors();
