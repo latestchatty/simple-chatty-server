@@ -220,7 +220,7 @@ namespace SimpleChattyServer.Services
         }
 
         public static string PreviewFromBody(string body) =>
-            StripTags(CollapseWhitespace(
+            CollapseWhitespace(StripTags(
                 RemoveSpoilers(body)
                 .Replace("<br />", " ")
                 .Replace("<br/>", " ")
@@ -316,7 +316,7 @@ namespace SimpleChattyServer.Services
 
             str = StrReplaceAll("  ", " ", str);
 
-            return str;
+            return str.Trim();
         }
     }
 }
