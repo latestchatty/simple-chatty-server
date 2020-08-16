@@ -15,12 +15,16 @@ data "aws_ami" "latest_ubuntu" {
 
 resource "aws_instance" "simple_chatty_server" {
   ami = data.aws_ami.latest_ubuntu.id
-  instance_type = "t2.micro"
+  instance_type = "t3a.micro"
   disable_api_termination = false
   instance_initiated_shutdown_behavior = "stop"
   monitoring = false
   iam_instance_profile = aws_iam_instance_profile.simple_chatty_server.name
   subnet_id = aws_subnet.subnet.id
+
+  credit_specification {
+    cpu_credits = "standard"
+  }
 
   vpc_security_group_ids = [
     aws_security_group.public_http_https.id
