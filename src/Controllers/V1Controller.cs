@@ -204,7 +204,7 @@ namespace SimpleChattyServer.Controllers
             if (!auth.HasValue)
                 return Content("", "text/plain");
             await _chattyProvider.Post(auth.Value.Username, auth.Value.Password,
-                string.IsNullOrWhiteSpace(request.Parent_id) ? 0 : int.Parse(request.Parent_id),
+                string.IsNullOrWhiteSpace(request.ParentId) ? 0 : int.Parse(request.ParentId),
                 request.Body);
             return Content("", "text/plain");
         }

@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace SimpleChattyServer.Data.Requests
 {
     public sealed class V1PostRequest
     {
-        public string Parent_id { get; set; }
+        [FromForm(Name = "parent_id")] public string ParentId { get; set; }
         public string Body { get; set; }
     }
 }

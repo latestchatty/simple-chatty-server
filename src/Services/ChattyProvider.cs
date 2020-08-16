@@ -95,7 +95,7 @@ namespace SimpleChattyServer.Services
             }
 
             var query = _downloadService.NewQuery();
-            query.Add("parent_id", parentId == 0 ? "" : "${parentId}");
+            query.Add("parent_id", parentId == 0 ? "" : $"{parentId}");
             query.Add("content_type_id", $"{contentTypeId}");
             query.Add("content_id", $"{contentId}");
             query.Add("page", "");
@@ -106,7 +106,7 @@ namespace SimpleChattyServer.Services
                 "https://www.shacknews.com/post_chatty.x",
                 username, password, query.ToString());
             
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(5));
 
             if (response.Contains("You must be logged in to post"))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,
