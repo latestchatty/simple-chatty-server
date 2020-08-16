@@ -92,7 +92,7 @@ namespace SimpleChattyServer.Controllers
                 if (post.Depth == 1)
                     v1RootCommentModel.Comments.Add(v1CommentModel);
                 else
-                    commentsById[lastIdAtDepth[post.Depth - 1]] = v1CommentModel;
+                    commentsById[lastIdAtDepth[post.Depth - 1]].Comments.Add(v1CommentModel);
             }
             return new V1ThreadModel
             {
@@ -240,12 +240,8 @@ namespace SimpleChattyServer.Controllers
                 .Skip((page - 1) * threadsPerPage)
                 .Take(threadsPerPage))
             {
-                var maxDepth = chattyThread.Posts.Max(x => x.Depth);
-                var lastIdAtDepth = new int[maxDepth + 1];
-                var replyCommentById = new Dictionary<int, V1CommentModel>();
                 var op = chattyThread.Posts[0];
-                lastIdAtDepth[0] = op.Id;
-                var v1RootCommentModel =
+                list.Add(
                     new V1RootCommentModel
                     {
                         Comments = new List<V1CommentModel>(),
@@ -258,29 +254,7 @@ namespace SimpleChattyServer.Controllers
                         Author = op.Author,
                         Preview = ThreadParser.PreviewFromBody(op.Body),
                         Id = $"{op.Id}"
-                    };
-                list.Add(v1RootCommentModel);
-                foreach (var chattyPost in chattyThread.Posts.Skip(1))
-                {
-                    lastIdAtDepth[chattyPost.Depth] = chattyPost.Id;
-                    var v1CommentModel =
-                        new V1CommentModel
-                        {
-                            Comments = new List<V1CommentModel>(),
-                            Body = chattyPost.Body,
-                            Date = chattyPost.Date,
-                            Category = chattyPost.Category,
-                            Author = chattyPost.Author,
-                            Preview = ThreadParser.PreviewFromBody(chattyPost.Body),
-                            Id = $"{chattyPost.Id}"
-                        };
-                    replyCommentById[chattyPost.Id] = v1CommentModel;
-                    var parentId = lastIdAtDepth[chattyPost.Depth - 1];
-                    if (parentId == op.Id)
-                        v1RootCommentModel.Comments.Add(v1CommentModel);
-                    else
-                        replyCommentById[parentId].Comments.Add(v1CommentModel);
-                }
+                    });
             }
 
             return new V1PageModel
