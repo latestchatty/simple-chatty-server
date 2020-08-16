@@ -14,14 +14,14 @@ namespace SimpleChattyServer.Services
 
         public string ConvertEmojisToEntities(string html)
         {
+            if (html.Length == 0)
+                return "";
+
             var bytes = _utf8Encoding.GetBytes(html);
             var stringBuilder = new List<byte>();
             var offset = 0;
 
-            if (html.Length == 0)
-                return "";
-
-            while (offset >= 0)
+            while (offset >= 0 && offset < bytes.Length)
             {
                 var decValue = ReadUnicodeCodePoint(bytes, ref offset);
                 if (decValue >= 128)
@@ -57,7 +57,7 @@ namespace SimpleChattyServer.Services
                 }
                 code = codetemp;
             }
-            offset += 1;
+            offset++;
             if (offset > utf8Bytes.Length)
                 offset = -1;
             return code;
