@@ -30,9 +30,10 @@ namespace SimpleChattyServer
             if (Environment.IsProduction())
                 services.AddLettuceEncrypt().PersistDataToDirectory(
                     new DirectoryInfo(storageSection.GetValue<string>("DataPath")), null);
-            services.AddResponseCompression();
-            services.AddCors(cors =>
-                cors.AddDefaultPolicy(
+            services.AddResponseCompression(
+                options => options.EnableForHttps = true);
+            services.AddCors(
+                cors => cors.AddDefaultPolicy(
                     builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
             services.Configure<StorageOptions>(storageSection);
