@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -479,10 +479,11 @@ namespace SimpleChattyServer.Controllers
             {
                 Threads = (
                     from pair in userData.LastReadPostByThreadId
-                    where chatty.ThreadsByRootId.ContainsKey(pair.Key)
+                    let threadId = int.Parse(pair.Key)
+                    where chatty.ThreadsByRootId.ContainsKey(threadId)
                     select new GetReadStatusResponse.Thread
                     {
-                        ThreadId = pair.Key,
+                        ThreadId = threadId,
                         LastReadPostId = pair.Value
                     }).ToList()
             };
@@ -498,18 +499,19 @@ namespace SimpleChattyServer.Controllers
                     if (request.ThreadId == 0)
                     {
                         foreach (var threadId in chatty.ThreadsByRootId.Keys)
-                            userData.LastReadPostByThreadId[threadId] = request.LastReadPostId;
+                            userData.LastReadPostByThreadId[$"{threadId}"] = request.LastReadPostId;
                     }
                     else
                     {
                         if (chatty.ThreadsByRootId.ContainsKey(request.ThreadId))
-                            userData.LastReadPostByThreadId[request.ThreadId] = request.LastReadPostId;
+                            userData.LastReadPostByThreadId[$"{request.ThreadId}"] = request.LastReadPostId;
                     }
 
                     foreach (var threadId in userData.LastReadPostByThreadId.Keys.ToList())
-                        if (!chatty.ThreadsByRootId.ContainsKey(threadId))
+                        if (!chatty.ThreadsByRootId.ContainsKey(int.Parse(threadId)))
                             userData.LastReadPostByThreadId.Remove(threadId);
                 });
+            await _eventProvider.SendReadStatusUpdateEvent(request.Username);
             return new SuccessResponse();
         }
 
