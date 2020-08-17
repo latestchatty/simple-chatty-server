@@ -253,8 +253,9 @@ namespace SimpleChattyServer.Services
             _lock.EnterReadLock();
             try
             {
-                var firstEventId = _events.Count == 0 ? 0 : _events[0].EventId;
-                if (lastEventId > 0 && lastEventId < firstEventId)
+                var minEventId = _events.Count == 0 ? 0 : _events[0].EventId;
+                var maxEventId = _events.Count == 0 ? 0 : _events[_events.Count - 1].EventId;
+                if (lastEventId < minEventId || lastEventId > maxEventId)
                     throw new Api400Exception(Api400Exception.Codes.TOO_MANY_EVENTS);
 
                 var list = new List<EventModel>();
