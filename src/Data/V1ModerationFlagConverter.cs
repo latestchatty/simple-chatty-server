@@ -12,7 +12,7 @@ namespace SimpleChattyServer.Data
         public override void Write(Utf8JsonWriter writer, ModerationFlag value, JsonSerializerOptions options) =>
             writer.WriteStringValue(ToJsonString(value));
         
-        private static string ToJsonString(ModerationFlag self)
+        public static string ToJsonString(ModerationFlag self)
         {
             switch (self)
             {

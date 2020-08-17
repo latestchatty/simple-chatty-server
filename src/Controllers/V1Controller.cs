@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Controllers
 {
@@ -52,13 +54,12 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpGet("thread/{threadId}.json")]
-        public async Task<V1ThreadModel> Thread(int threadId)
+        public async Task<ContentResult> Thread(int threadId)
         {
             var chattyThread = await _chattyProvider.GetThread(threadId);
             var list = new List<V1RootCommentModel>();
             var maxDepth = chattyThread.Posts.Max(x => x.Depth);
-            var lastIdAtDepth = new int[maxDepth + 1];
-            var commentsById = new Dictionary<int, V1CommentModel>();
+            var lastCommentAtDepth = new V1CommentModel[maxDepth + 1];
             var op = chattyThread.Posts[0];
             var v1RootCommentModel =
                 new V1RootCommentModel
@@ -76,7 +77,6 @@ namespace SimpleChattyServer.Controllers
                     };
             foreach (var post in chattyThread.Posts.Skip(1))
             {
-                lastIdAtDepth[post.Depth] = post.Id;
                 var v1CommentModel =
                     new V1CommentModel
                     {
@@ -88,16 +88,86 @@ namespace SimpleChattyServer.Controllers
                         Preview = ThreadParser.PreviewFromBody(post.Body),
                         Id = $"{post.Id}"
                     };
-                commentsById[post.Id] = v1CommentModel;
                 if (post.Depth == 1)
                     v1RootCommentModel.Comments.Add(v1CommentModel);
                 else
-                    commentsById[lastIdAtDepth[post.Depth - 1]].Comments.Add(v1CommentModel);
+                    lastCommentAtDepth[post.Depth - 1].Comments.Add(v1CommentModel);
+                lastCommentAtDepth[post.Depth] = v1CommentModel;
             }
-            return new V1ThreadModel
+            var response = new V1ThreadModel
             {
                 Comments = new List<V1RootCommentModel> { v1RootCommentModel }
             };
+
+            // the serializer has a maximum depth that is too low, even if you reconfigure it to the hard max.
+            var sb = new StringBuilder();
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            sb.Append("{");
+            AppendProperty(sb, "id", v1RootCommentModel.Id, options);
+            AppendProperty(sb, "reply_count", v1RootCommentModel.ReplyCount, options);
+            AppendProperty(sb, "body", v1RootCommentModel.Body, options);
+            AppendProperty(sb, "date", V1DateTimeOffsetConverter.ToJsonString(v1RootCommentModel.Date), options);
+            AppendProperty(sb, "participants", v1RootCommentModel.Participants, options);
+            AppendProperty(sb, "category", V1ModerationFlagConverter.ToJsonString(v1RootCommentModel.Category), options);
+            AppendProperty(sb, "last_reply_id", v1RootCommentModel.LastReplyId, options);
+            AppendProperty(sb, "author", v1RootCommentModel.Author, options);
+            AppendProperty(sb, "preview", v1RootCommentModel.Preview, options);
+            sb.Append("\"comments\":[{");
+            AppendProperty(sb, "id", v1RootCommentModel.Id, options);
+            AppendProperty(sb, "body", v1RootCommentModel.Body, options);
+            AppendProperty(sb, "date", V1DateTimeOffsetConverter.ToJsonString(v1RootCommentModel.Date), options);
+            AppendProperty(sb, "category", V1ModerationFlagConverter.ToJsonString(v1RootCommentModel.Category), options);
+            AppendProperty(sb, "author", v1RootCommentModel.Author, options);
+            AppendProperty(sb, "preview", v1RootCommentModel.Preview, options);
+            sb.Append("\"comments\":");
+            AppendCommentList(sb, v1RootCommentModel.Comments, options);
+            sb.Append("]}");
+            return Content(sb.ToString(), "application/json");
+
+            static void AppendProperty<T>(StringBuilder sb, string key, T value, JsonSerializerOptions options)
+            {
+                sb.Append(JsonSerializer.Serialize(key));
+                sb.Append(":");
+                sb.Append(JsonSerializer.Serialize(value, options));
+                sb.Append(",");
+            }
+
+            static void AppendCommentList(StringBuilder sb, List<V1CommentModel> rootComments,
+                JsonSerializerOptions options)
+            {
+                var stack = new Stack<(List<V1CommentModel> List, int NextIndex)>();
+                stack.Push((rootComments, 0));
+
+                while (stack.Any())
+                {
+                    var (list, index) = stack.Pop();
+                    if (index == 0)
+                    {
+                        sb.Append("[");
+                    }
+                    if (index == list.Count)
+                    {
+                        sb.Append("]}");
+                        continue;
+                    }
+                    stack.Push((list, index + 1));
+
+                    var comment = list[index];
+
+                    if (index == 0)
+                        sb.Append("{");
+                    else
+                        sb.Append(",{");
+                    AppendProperty(sb, "id", comment.Id, options);
+                    AppendProperty(sb, "body", comment.Body, options);
+                    AppendProperty(sb, "date", V1DateTimeOffsetConverter.ToJsonString(comment.Date), options);
+                    AppendProperty(sb, "category", V1ModerationFlagConverter.ToJsonString(comment.Category), options);
+                    AppendProperty(sb, "author", comment.Author, options);
+                    AppendProperty(sb, "preview", comment.Preview, options);
+                    sb.Append("\"comments\":");
+                    stack.Push((comment.Comments, 0));
+                }
+            }
         }
 
         [HttpGet("search.json")]
