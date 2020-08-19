@@ -17,14 +17,18 @@ namespace SimpleChattyServer.Services
             _downloadService = downloadService;
         }
 
-        public async Task<ChattyLolCounts> DownloadChattyLolCounts()
+        public async Task<(string Json, ChattyLolCounts LolCounts)> DownloadChattyLolCounts(
+            string previousJson = null, ChattyLolCounts previousChattyLolCounts = null)
         {
             var json = await _downloadService.DownloadWithSharedLogin(
                 "https://www.shacknews.com/api2/api-index.php?action2=ext_get_counts",
                 verifyLoginStatus: false);
+            if (json == previousJson)
+                return (json, previousChattyLolCounts);
+
             var response = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(
                 json);
-            return
+            return (json,
                 new ChattyLolCounts
                 {
                     CountsByThreadId = (
@@ -42,7 +46,7 @@ namespace SimpleChattyServer.Services
                         let threadLolCounts = new ThreadLolCounts { CountsByPostId = threadTagsDict }
                         select (ThreadId: threadId, ThreadLolCounts: threadLolCounts)
                         ).ToDictionary(x => x.ThreadId, x => x.ThreadLolCounts)
-                };
+                });
         }
 
         public async Task<ThreadLolCounts> DownloadThreadLolCounts(ChattyThread thread)

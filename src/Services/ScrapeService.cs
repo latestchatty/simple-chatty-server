@@ -20,6 +20,9 @@ namespace SimpleChattyServer.Services
         private readonly ChattyProvider _chattyProvider;
         private readonly EventProvider _eventProvider;
         private readonly Timer _timer;
+        private readonly Dictionary<int, (string Html, ChattyPage Page)> _previousPages =
+            new Dictionary<int, (string Html, ChattyPage Page)>();
+        private (string Json, ChattyLolCounts LolCounts) _previousLols = (null, null);
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
             LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider,
@@ -65,6 +68,9 @@ namespace SimpleChattyServer.Services
 
             try
             {
+                var lolTask = _lolParser.DownloadChattyLolCounts(
+                    _previousLols.Json, _previousLols.LolCounts);
+
                 var newChatty = await GetChattyWithoutBodies();
 
                 List<int> threadIdsWithMissingPostBodies;
@@ -75,7 +81,7 @@ namespace SimpleChattyServer.Services
 
                 await DownloadPostBodies(newChatty, threadIdsWithMissingPostBodies);
 
-                var lolCounts = await _lolParser.DownloadChattyLolCounts();
+                var (lolJson, lolCounts) = _previousLols = await lolTask;
 
                 _chattyProvider.Update(newChatty, lolCounts);
                 await _eventProvider.Update(newChatty, lolCounts);
@@ -97,10 +103,10 @@ namespace SimpleChattyServer.Services
             var chatty =
                 new Chatty
                 {
-                    Threads = new List<ChattyThread>(),
-                    ThreadsByRootId = new Dictionary<int, ChattyThread>(),
-                    ThreadsByReplyId = new Dictionary<int, ChattyThread>(),
-                    PostsById = new Dictionary<int, ChattyPost>()
+                    Threads = new List<ChattyThread>(200),
+                    ThreadsByRootId = new Dictionary<int, ChattyThread>(200),
+                    ThreadsByReplyId = new Dictionary<int, ChattyThread>(2000),
+                    PostsById = new Dictionary<int, ChattyPost>(2000)
                 };
 
             var currentPage = 1;
@@ -108,7 +114,11 @@ namespace SimpleChattyServer.Services
 
             while (currentPage <= lastPage)
             {
-                var chattyPage = await _chattyParser.GetChattyPage(currentPage);
+                var (html, chattyPage) =
+                    _previousPages.TryGetValue(currentPage, out var prev)
+                    ? await _chattyParser.GetChattyPage(currentPage, prev.Html, prev.Page)
+                    : await _chattyParser.GetChattyPage(currentPage);
+                _previousPages[currentPage] = (html, chattyPage);
                 lastPage = chattyPage.LastPage;
 
                 foreach (var thread in chattyPage.Threads)
@@ -165,26 +175,32 @@ namespace SimpleChattyServer.Services
 
         private async Task DownloadPostBodies(Chatty newChatty, List<int> threadIdsWithMissingPostBodies)
         {
-            foreach (var threadId in threadIdsWithMissingPostBodies)
+            await Task.Run(() =>
             {
-                var postBodies = await _threadParser.GetThreadBodies(threadId);
-
-                foreach (var postBody in postBodies)
-                {
-                    if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
+                Parallel.ForEach(
+                    threadIdsWithMissingPostBodies,
+                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                    threadId =>
                     {
-                        newChattyPost.Body = postBody.Body;
-                        newChattyPost.Date = postBody.Date;
-                    }
-                }
+                        var postBodies = _threadParser.GetThreadBodies(threadId).GetAwaiter().GetResult();
 
-                // if a post was nuked in between downloading the chatty and downloading the bodies, we might have missed
-                // a body here. let's paper over it
-                if (newChatty.ThreadsByRootId.TryGetValue(threadId, out var newChattyThread))
-                    foreach (var newChattyPost in newChattyThread.Posts)
-                        if (newChattyPost.Body == null)
-                            newChattyPost.Body = "";
-            }
+                        foreach (var postBody in postBodies)
+                        {
+                            if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
+                            {
+                                newChattyPost.Body = postBody.Body;
+                                newChattyPost.Date = postBody.Date;
+                            }
+                        }
+
+                        // if a post was nuked in between downloading the chatty and downloading the bodies, we might have missed
+                        // a body here. let's paper over it
+                        if (newChatty.ThreadsByRootId.TryGetValue(threadId, out var newChattyThread))
+                            foreach (var newChattyPost in newChattyThread.Posts)
+                                if (newChattyPost.Body == null)
+                                    newChattyPost.Body = "";
+                    });
+            });
         }
     }
 }

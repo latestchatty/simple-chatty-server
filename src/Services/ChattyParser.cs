@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Exceptions;
@@ -10,6 +11,10 @@ namespace SimpleChattyServer.Services
     {
         private readonly DownloadService _downloadService;
         private readonly ThreadParser _threadParser;
+        private readonly Regex _progressMeterRegex = new Regex(
+            "<div class=\"progress\" style=\"width: [0-9]+(\\.[0-9]+)?%\">", RegexOptions.Compiled);
+        private readonly Regex _commentCountRegex = new Regex(
+            "<a href=\"/chatty\">[0-9,]+ Comments</a>", RegexOptions.Compiled);
 
         public ChattyParser(DownloadService downloadService, ThreadParser threadParser)
         {
@@ -17,11 +22,20 @@ namespace SimpleChattyServer.Services
             _threadParser = threadParser;
         }
 
-        public async Task<ChattyPage> GetChattyPage(int page)
+        public async Task<(string Html, ChattyPage Page)> GetChattyPage(
+            int page, string previousHtml = null, ChattyPage previousChattyPage = null)
         {
             var url = $"https://www.shacknews.com/chatty?page={page}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
-            return ParseChattyPage(html);
+
+            // remove the progress meter which changes on every load, so that we'll get identical html when nothing
+            // has changed
+            html = _progressMeterRegex.Replace(html, "");
+
+            // remove the comment count too, it appears on all pages even though some pages haven't changed
+            html = _commentCountRegex.Replace(html, "");
+
+            return (html, html == previousHtml ? previousChattyPage : ParseChattyPage(html));
         }
 
         private ChattyPage ParseChattyPage(string html)
