@@ -115,7 +115,7 @@ namespace SimpleChattyServer.Services
                 "https://www.shacknews.com/post_chatty.x",
                 username, password, query.ToString());
             
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromSeconds(10));
 
             if (response.Contains("You must be logged in to post"))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,
