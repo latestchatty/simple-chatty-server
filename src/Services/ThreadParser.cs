@@ -98,9 +98,9 @@ namespace SimpleChattyServer.Services
             return list;
         }
 
-        private async Task<ChattyThread> GetThreadTree(int threadId)
+        public async Task<ChattyThread> GetThreadTree(int id)
         {
-            var url = $"https://www.shacknews.com/chatty?id={threadId}";
+            var url = $"https://www.shacknews.com/chatty?id={id}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
             if (!html.Contains("</html>"))

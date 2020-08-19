@@ -74,6 +74,15 @@ namespace SimpleChattyServer.Services
                 return await _threadParser.GetThread(postId);
         }
 
+        public async Task<ChattyThread> GetThreadTree(int postId)
+        {
+            var chatty = Chatty;
+            if (chatty != null && chatty.ThreadsByReplyId.TryGetValue(postId, out var thread))
+                return thread;
+            else
+                return await _threadParser.GetThreadTree(postId);
+        }
+
         public async Task Post(string username, string password, int parentId, string body)
         {
             if (body.Length > 0 && body[0] == '@')
