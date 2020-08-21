@@ -38,7 +38,9 @@ namespace SimpleChattyServer.Data
                 case "tangent": return ModerationFlag.Tangent;
                 case "informative": return ModerationFlag.Informative;
                 case "nuked": return ModerationFlag.Nuked;
-                default: throw new ArgumentOutOfRangeException(str);
+                default:
+                    Console.WriteLine($"Unknown ModerationFlag: {str}");
+                    return ModerationFlag.OnTopic;
             }
         }
     }
