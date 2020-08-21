@@ -255,8 +255,8 @@ namespace SimpleChattyServer.Services
             {
                 var minEventId = _events.Count == 0 ? 0 : _events[0].EventId;
                 var maxEventId = _events.Count == 0 ? 0 : _events[_events.Count - 1].EventId;
-                if (lastEventId < minEventId || lastEventId > maxEventId)
-                    throw new Api400Exception(Api400Exception.Codes.TOO_MANY_EVENTS);
+                if (lastEventId < minEventId - 1 || lastEventId > maxEventId)
+                    return null;
 
                 var list = new List<EventModel>();
                 for (var i = _events.Count - 1; i >= 0 && _events[i].EventId > lastEventId; i--)

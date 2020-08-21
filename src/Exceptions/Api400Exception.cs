@@ -11,7 +11,6 @@ namespace SimpleChattyServer.Exceptions
             public const string INVALID_POST = "ERR_INVALID_POST";
             public const string NOT_MODERATOR = "ERR_NOT_MODERATOR";
             public const string NUKED = "ERR_NUKED";
-            public const string TOO_MANY_EVENTS = "ERR_TOO_MANY_EVENTS";
             public const string POST_RATE_LIMIT = "ERR_POST_RATE_LIMIT";
         }
 

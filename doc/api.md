@@ -238,7 +238,7 @@ In a loop running until the application exits:
 Call [/v2/waitForEvent](#get-v2waitforevent), passing the last event ID (either from the original [/v2/getNewestEventId](#get-v2getnewesteventid) call, or the previous loop).  This will block until an event is ready, so your loop does not need any delays (unless you want to artificially limit the rate of events).
 - *For mobile clients and other "limited energy/bandwidth/processor" scenarios:*   
 Call [/v2/pollForEvent](#get-v2pollforevent), passing the last event ID (either from the original [/v2/getNewestEventId](#get-v2getnewesteventid) call, or the previous loop).  This will always return immediately, but may return zero events.  Then delay for length of time of your choosing (perhaps 1 minute) to allow your WiFi/3G/LTE radio to go idle.
-- If `ERR_TOO_MANY_EVENTS` is returned, then throw out your copy of the chatty and start over by calling [/v2/getNewestEventId](#get-v2getnewesteventid) and [/v2/getChatty](#get-v2getchatty).  If the call fails with a different error, then display the error message and exit the loop rather than continuing to call it.
+- If `TooManyEvents` in the response is true, then throw out your copy of the chatty and start over by calling [/v2/getNewestEventId](#get-v2getnewesteventid) and [/v2/getChatty](#get-v2getchatty).  If the call fails with a different error, then display the error message and exit the loop rather than continuing to call it.
 
 When your event loop retrieves a new event:
 - For a new post, insert the post into your copy of the chatty.
@@ -487,12 +487,10 @@ Response:
 ```
 {
    "lastEventId": [INT],  // new lastEventId to be used in your next loop
-   "events": [EVENTS]
+   "events": [EVENTS],
+   "tooManyEvents": [BIT]
 }
 ```
-
-Errors:
-- `ERR_TOO_MANY_EVENTS`
 
 ### GET /v2/pollForEvent
 Returns the information about all events (if any) that occurred since the last event seen by the client (as specified in the `lastEventId` argument).  This method is for use by clients in limited bandwidth or limited processor scenarios.  It is expected that these clients would call this method around once per minute (the interval is up to the developer's discretion).  Desktop clients (and phone clients who want a faster update rate at the expense of battery life) should use [/v2/waitForEvent](#get-v2waitforevent).  The client should process all events in sequential (by numeric ID) order.
@@ -506,12 +504,10 @@ Response:
 ```
 {
    "lastEventId": [INT],  // new lastEventId to be used in your next loop
-   "events": [EVENTS]
+   "events": [EVENTS],
+   "tooManyEvents": [BIT]
 }
 ```
-
-Errors:
-- `ERR_TOO_MANY_EVENTS`
 
 ## Users
 These API calls pertain to user accounts.

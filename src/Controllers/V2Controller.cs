@@ -276,6 +276,15 @@ namespace SimpleChattyServer.Controllers
             while (stopwatch.Elapsed < maxTime)
             {
                 var events = _eventProvider.GetEvents(lastEventId);
+                if (events == null)
+                {
+                    return new WaitForEventResponse
+                    {
+                        LastEventId = _eventProvider.GetLastEventId(),
+                        Events = new List<EventModel>(),
+                        TooManyEvents = true
+                    };
+                }
                 if (events.Count > 0)
                 {
                     return new WaitForEventResponse
@@ -299,6 +308,15 @@ namespace SimpleChattyServer.Controllers
         public WaitForEventResponse PollForEvent(int lastEventId)
         {
             var events = _eventProvider.GetEvents(lastEventId);
+            if (events == null)
+            {
+                return new WaitForEventResponse
+                {
+                    LastEventId = _eventProvider.GetLastEventId(),
+                    Events = new List<EventModel>(),
+                    TooManyEvents = true
+                };
+            }
             return new WaitForEventResponse
             {
                 LastEventId = events.Count > 0 ? events.Last().EventId : lastEventId,

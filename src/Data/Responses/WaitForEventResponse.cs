@@ -7,5 +7,6 @@ namespace SimpleChattyServer.Data.Responses
     {
         public int LastEventId { get; set; }
         public List<EventModel> Events { get; set; }
+        public bool TooManyEvents { get; set; }
     }
 }
