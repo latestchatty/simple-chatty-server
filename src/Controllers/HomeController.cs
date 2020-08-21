@@ -21,7 +21,7 @@ namespace SimpleChattyServer.Controllers
         public ContentResult Index()
         {
             Response.StatusCode = 301;
-            Response.Headers["Location"] = "https://www.shacknews.com/search?q=&type=4";
+            Response.Headers["Location"] = "/search";
             return Content("");
         }
 
