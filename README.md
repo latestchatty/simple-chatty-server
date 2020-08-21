@@ -4,6 +4,7 @@ This service powers `winchatty.com`. [View the API documentation](https://github
 
 ## Development
 
+- Edit `src/appsettings.json` and fill in, at minimum, the `SharedLogin` and `Storage` sections.
 - In the `build` directory, run `./debug.sh`.
 
 ## Deployment
