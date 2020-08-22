@@ -68,34 +68,37 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/frame_laryn.x?root={threadId}";
             var html = await _downloadService.DownloadWithSharedLogin(url, verifyLoginStatus: false);
 
-            if (!html.Contains("</html>"))
-                throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
-
-            var p = new Parser(html);
-            var list = new List<ChattyPost>();
-
-            while (p.Peek(1, "<div id=\"item_") != -1)
+            return await Task.Run(() =>
             {
-                var reply = new ChattyPost();
-                reply.Id = int.Parse(p.Clip(
-                    new[] { "<div id=\"item_", "_" },
-                    "\">"));
-                reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
-                    new[] { "<div class=\"fullpost", "fpmod_", "_" },
-                    " "));
-                reply.Author = WebUtility.HtmlDecode(p.Clip(
-                    new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
-                    "</a>")).Trim();
-                reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
-                    new[] { "<div class=\"postbody\">", ">" },
-                    "</div>")))).Trim();
-                reply.Date = DateParser.Parse(StripTags(p.Clip(
-                    new[] { "<div class=\"postdate\">", ">" },
-                    "T</div")) + "T");
-                list.Add(reply);
-            }
+                if (!html.Contains("</html>"))
+                    throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
-            return list;
+                var p = new Parser(html);
+                var list = new List<ChattyPost>();
+
+                while (p.Peek(1, "<div id=\"item_") != -1)
+                {
+                    var reply = new ChattyPost();
+                    reply.Id = int.Parse(p.Clip(
+                        new[] { "<div id=\"item_", "_" },
+                        "\">"));
+                    reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
+                        new[] { "<div class=\"fullpost", "fpmod_", "_" },
+                        " "));
+                    reply.Author = WebUtility.HtmlDecode(p.Clip(
+                        new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
+                        "</a>")).Trim();
+                    reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
+                        new[] { "<div class=\"postbody\">", ">" },
+                        "</div>")))).Trim();
+                    reply.Date = DateParser.Parse(StripTags(p.Clip(
+                        new[] { "<div class=\"postdate\">", ">" },
+                        "T</div")) + "T");
+                    list.Add(reply);
+                }
+
+                return list;
+            });
         }
 
         public async Task<ChattyThread> GetThreadTree(int id)
@@ -103,18 +106,21 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/chatty?id={id}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
-            if (!html.Contains("</html>"))
-                throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
+            return await Task.Run(() =>
+            {
+                if (!html.Contains("</html>"))
+                    throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
-            if (html.Contains("<p class=\"be_first_to_comment\">"))
-                throw new MissingThreadException("This post is in the future.");
+                if (html.Contains("<p class=\"be_first_to_comment\">"))
+                    throw new MissingThreadException("This post is in the future.");
 
-            CheckContentId(html);
+                CheckContentId(html);
 
-            var p = new Parser(html);
-            p.Seek(1, "<div class=\"threads\">");
+                var p = new Parser(html);
+                p.Seek(1, "<div class=\"threads\">");
 
-            return ParseThreadTree(p, stopAtFullPost: false);
+                return ParseThreadTree(p, stopAtFullPost: false);
+            });
         }
 
         public ChattyThread ParseThreadTree(Parser p, bool stopAtFullPost = true)
@@ -208,15 +214,19 @@ namespace SimpleChattyServer.Services
         public async Task<(int ContentTypeId, int ContentId)> GetContentTypeId(int postId)
         {
             var html = await _downloadService.DownloadWithSharedLogin($"https://www.shacknews.com/chatty?id={postId}");
-            var p = new Parser(html);
-            p.Seek(1, "<input type=\"hidden\" name=\"content_type_id\"");
-            var contentTypeId = int.Parse(p.Clip(
-                new[] { "value=\"", "\"" },
-                "\""));
-            var contentId = int.Parse(p.Clip(
-                new[] { "value=\"", "\"" },
-                "\""));
-            return (contentTypeId, contentId);
+            
+            return await Task.Run(() =>
+            {
+                var p = new Parser(html);
+                p.Seek(1, "<input type=\"hidden\" name=\"content_type_id\"");
+                var contentTypeId = int.Parse(p.Clip(
+                    new[] { "value=\"", "\"" },
+                    "\""));
+                var contentId = int.Parse(p.Clip(
+                    new[] { "value=\"", "\"" },
+                    "\""));
+                return (contentTypeId, contentId);
+            });
         }
 
         public static string PreviewFromBody(string body) =>

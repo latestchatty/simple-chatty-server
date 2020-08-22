@@ -33,38 +33,41 @@ namespace SimpleChattyServer.Services
             var html = await _downloadService.DownloadWithSharedLogin(
                 "http://www.shacknews.com/search?" + query.ToString());
 
-            var p = new Parser(html);
-            var searchResultPage =
-                new SearchResultPage
-                {
-                    Results = new List<SearchResult>(),
-                    CurrentPage = page
-                };
-
-            searchResultPage.TotalResults = int.Parse(p.Clip(
-                new[] { "<h2 class=\"search-num-found\"", ">" },
-                " ").Replace(",", ""));
-
-            while (p.Peek(1, "<li class=\"result") != -1 &&
-                p.Peek(1, "<span class=\"chatty-author\">") != -1)
+            return await Task.Run(() =>
             {
-                var result = new SearchResult();
-                result.Author = p.Clip(
-                    new[] { "<span class=\"chatty-author\">", "<a class=\"more\"", ">" },
-                    ":</a></span>");
-                result.Date = DateParser.Parse(p.Clip(
-                    new[] { "<span class=\"postdate\"", ">", " " },
-                    "</span>"));
-                result.Id = int.Parse(p.Clip(
-                    new[] { "<a href=\"/chatty", "chatty/", "/" },
-                    "\""));
-                result.Preview = p.Clip(
-                    new[] { ">" },
-                    "</a>");
-                searchResultPage.Results.Add(result);
-            }
+                var p = new Parser(html);
+                var searchResultPage =
+                    new SearchResultPage
+                    {
+                        Results = new List<SearchResult>(),
+                        CurrentPage = page
+                    };
 
-            return searchResultPage;
+                searchResultPage.TotalResults = int.Parse(p.Clip(
+                    new[] { "<h2 class=\"search-num-found\"", ">" },
+                    " ").Replace(",", ""));
+
+                while (p.Peek(1, "<li class=\"result") != -1 &&
+                    p.Peek(1, "<span class=\"chatty-author\">") != -1)
+                {
+                    var result = new SearchResult();
+                    result.Author = p.Clip(
+                        new[] { "<span class=\"chatty-author\">", "<a class=\"more\"", ">" },
+                        ":</a></span>");
+                    result.Date = DateParser.Parse(p.Clip(
+                        new[] { "<span class=\"postdate\"", ">", " " },
+                        "</span>"));
+                    result.Id = int.Parse(p.Clip(
+                        new[] { "<a href=\"/chatty", "chatty/", "/" },
+                        "\""));
+                    result.Preview = p.Clip(
+                        new[] { ">" },
+                        "</a>");
+                    searchResultPage.Results.Add(result);
+                }
+
+                return searchResultPage;
+            });
         }
     }
 }
