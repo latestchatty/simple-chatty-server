@@ -192,14 +192,14 @@ namespace SimpleChattyServer.Services
                                 newChattyPost.Date = postBody.Date;
                             }
                         }
-
-                        // if a post was nuked in between downloading the chatty and downloading the bodies, we might have missed
-                        // a body here. let's paper over it
-                        if (newChatty.ThreadsByRootId.TryGetValue(threadId, out var newChattyThread))
-                            foreach (var newChattyPost in newChattyThread.Posts)
-                                if (newChattyPost.Body == null)
-                                    newChattyPost.Body = "";
                     });
+
+                // bail if there are still missing bodies. this happens in rare situations where shacknews itself fails
+                // to include a new post in the bodies response
+                foreach (var thread in newChatty.Threads)
+                    foreach (var post in thread.Posts)
+                        if (post.Body == null)
+                            throw new ParsingException($"Missing body for post {post.Id}.");
             });
         }
     }
