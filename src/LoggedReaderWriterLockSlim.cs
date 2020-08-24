@@ -6,6 +6,7 @@ namespace SimpleChattyServer
 {
     public sealed class LoggedReaderWriterLockSlim
     {
+        private const double MIN_LOG_MSEC = 10;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly string _name;
         private readonly Action<string> _logAction;
@@ -22,14 +23,16 @@ namespace SimpleChattyServer
             _lock.EnterReadLock();
             try
             {
-                _logAction?.Invoke($"Caller \"{caller}\" entered read lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
+                if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
+                    _logAction?.Invoke($"Caller \"{caller}\" entered read lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
                 sw.Restart();
                 action();
             }
             finally
             {
                 _lock.ExitReadLock();
-                _logAction?.Invoke($"Caller \"{caller}\" held read lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
+                if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
+                    _logAction?.Invoke($"Caller \"{caller}\" held read lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
             }
         }
 
@@ -39,14 +42,16 @@ namespace SimpleChattyServer
             _lock.EnterWriteLock();
             try
             {
-                _logAction?.Invoke($"Caller \"{caller}\" entered write lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
+                if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
+                    _logAction?.Invoke($"Caller \"{caller}\" entered write lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
                 sw.Restart();
                 action();
             }
             finally
             {
                 _lock.ExitWriteLock();
-                _logAction?.Invoke($"Caller \"{caller}\" held write lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
+                if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
+                    _logAction?.Invoke($"Caller \"{caller}\" held write lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
             }
         }
 
