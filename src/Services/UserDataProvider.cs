@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Data.Options;
+using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
@@ -29,6 +30,9 @@ namespace SimpleChattyServer.Services
 
         public async Task<UserData> GetUserData(string username)
         {
+            if (string.IsNullOrEmpty(username))
+                throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, "Username must be provided.");
+
             try
             {
                 return await Task.Run(() =>
@@ -52,6 +56,9 @@ namespace SimpleChattyServer.Services
 
         public async Task UpdateUserData(string username, Action<UserData> action)
         {
+            if (string.IsNullOrEmpty(username))
+                throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, "Username must be provided.");
+
             await Task.Run(() =>
                 _lock.WithWriteLock(nameof(UpdateUserData),
                     () =>
