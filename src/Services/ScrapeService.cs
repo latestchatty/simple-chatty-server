@@ -233,12 +233,7 @@ namespace SimpleChattyServer.Services
 
             await Task.Run(() =>
             {
-                var oldPostsById = (
-                    from page in _state.Pages
-                    from thread in page.ChattyPage.Threads
-                    from post in thread.Posts
-                    select post
-                    ).ToDictionary(x => x.Id);
+                var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts).ToDictionary(x => x.Id);
 
                 foreach (var newThread in newChatty.Threads)
                 {
