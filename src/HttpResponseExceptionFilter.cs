@@ -21,7 +21,11 @@ namespace SimpleChattyServer
             if (context.Exception != null)
             {
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<HttpResponseExceptionFilter>>();
-                logger.LogError(context.Exception, context.Exception.Message);
+                logger.LogError(context.Exception,
+                    "{RequestMethod} {RequestPath} threw {Exception}.",
+                    context.HttpContext.Request.Method,
+                    context.HttpContext.Request.Path,
+                    context.Exception.GetType().Name);
 
                 if (context.Exception is ApiException apiException)
                 {
