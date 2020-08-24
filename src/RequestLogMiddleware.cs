@@ -8,7 +8,7 @@ namespace SimpleChattyServer
 {
     public sealed class RequestLogMiddleware
     {
-        private const string REQUEST_TEMPLATE = "{RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:#,##0} ms";
+        private const string REQUEST_TEMPLATE = "{RequestMethod} {RequestPath} {StatusCode} {Elapsed:#,##0} ms";
 
         private readonly ILogger _logger;
         private readonly RequestDelegate _next;
