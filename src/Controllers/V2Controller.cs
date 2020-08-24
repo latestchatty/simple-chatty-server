@@ -123,7 +123,7 @@ namespace SimpleChattyServer.Controllers
         {
             var idList = ParseIntList(id, nameof(id), min: 1, max: 200);
             var list = new List<GetThreadPostCountResponse.Thread>(idList.Count);
-            await Task.Run(() => Parallel.ForEach(
+            await LongRunningTask.Run(() => Parallel.ForEach(
                 idList,
                 new ParallelOptions { MaxDegreeOfParallelism = 4 },
                 postId =>

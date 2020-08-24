@@ -33,7 +33,7 @@ namespace SimpleChattyServer.Services
             var html = await _downloadService.DownloadWithSharedLogin(
                 "http://www.shacknews.com/search?" + query.ToString());
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var p = new Parser(html);
                 var searchResultPage =

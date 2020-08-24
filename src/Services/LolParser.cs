@@ -26,7 +26,7 @@ namespace SimpleChattyServer.Services
             if (json == previousJson)
                 return (json, previousChattyLolCounts);
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var response = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(
                     json);
@@ -63,7 +63,7 @@ namespace SimpleChattyServer.Services
                 verifyLoginStatus: false,
                 postBody: query.ToString());
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var response = JsonSerializer.Deserialize<TagsForPosts>(json,
                     new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });

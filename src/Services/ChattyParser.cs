@@ -28,7 +28,7 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/chatty?page={page}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 // remove the progress meter which changes on every load, so that we'll get identical html when nothing
                 // has changed

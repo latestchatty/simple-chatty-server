@@ -24,7 +24,7 @@ namespace SimpleChattyServer
             try
             {
                 if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
-                    _logAction?.Invoke($"Caller \"{caller}\" entered read lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
+                    _logAction?.Invoke($"Caller \"{caller}\" entered read lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:##,#0} ms.");
                 sw.Restart();
                 action();
             }
@@ -32,7 +32,7 @@ namespace SimpleChattyServer
             {
                 _lock.ExitReadLock();
                 if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
-                    _logAction?.Invoke($"Caller \"{caller}\" held read lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
+                    _logAction?.Invoke($"Caller \"{caller}\" held read lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:##,#0} ms.");
             }
         }
 
@@ -43,7 +43,7 @@ namespace SimpleChattyServer
             try
             {
                 if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
-                    _logAction?.Invoke($"Caller \"{caller}\" entered write lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:0} ms.");
+                    _logAction?.Invoke($"Caller \"{caller}\" entered write lock \"{_name}\" in {sw.Elapsed.TotalMilliseconds:##,#0} ms.");
                 sw.Restart();
                 action();
             }
@@ -51,7 +51,7 @@ namespace SimpleChattyServer
             {
                 _lock.ExitWriteLock();
                 if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
-                    _logAction?.Invoke($"Caller \"{caller}\" held write lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:0} ms.");
+                    _logAction?.Invoke($"Caller \"{caller}\" held write lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:##,#0} ms.");
             }
         }
 

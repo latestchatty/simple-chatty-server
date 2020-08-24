@@ -231,7 +231,7 @@ namespace SimpleChattyServer.Services
             if (_state == null)
                 return;
 
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
             {
                 var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts).ToDictionary(x => x.Id);
 
@@ -251,7 +251,7 @@ namespace SimpleChattyServer.Services
 
         private async Task DownloadPostBodies(Chatty newChatty, List<int> threadIdsWithMissingPostBodies)
         {
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
             {
                 Parallel.ForEach(
                     threadIdsWithMissingPostBodies,

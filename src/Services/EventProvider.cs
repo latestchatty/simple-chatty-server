@@ -32,7 +32,7 @@ namespace SimpleChattyServer.Services
 
         public async Task<List<EventModel>> CloneEventsList()
         {
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
                 _lock.WithReadLock(nameof(CloneEventsList),
                     () => new List<EventModel>(_events)));
         }
@@ -42,7 +42,7 @@ namespace SimpleChattyServer.Services
             if (_chatty != null || _chattyLolCounts != null)
                 throw new InvalidOperationException($"{nameof(EventProvider)} already started.");
 
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
                 _lock.WithWriteLock(nameof(Start),
                     () =>
                     {
@@ -53,7 +53,7 @@ namespace SimpleChattyServer.Services
 
         public async Task PrePopulate(Chatty newChatty, ChattyLolCounts newChattyLolCounts, List<EventModel> events)
         {
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
                 _lock.WithWriteLock(nameof(PrePopulate),
                     () =>
                     {
@@ -66,7 +66,7 @@ namespace SimpleChattyServer.Services
 
         public async Task Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
         {
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
                 _lock.WithWriteLock(nameof(Update),
                     () =>
                     {
@@ -257,7 +257,7 @@ namespace SimpleChattyServer.Services
 
         public async Task SendReadStatusUpdateEvent(string username)
         {
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
                 _lock.WithWriteLock(nameof(SendReadStatusUpdateEvent),
                     () =>
                     {
@@ -277,7 +277,7 @@ namespace SimpleChattyServer.Services
 
         public async Task<List<EventModel>> GetEvents(int lastEventId)
         {
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
                 _lock.WithReadLock(nameof(GetEvents),
                     () =>
                     {
@@ -297,7 +297,7 @@ namespace SimpleChattyServer.Services
 
         public async Task<int> GetLastEventId()
         {
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
                 _lock.WithReadLock(nameof(GetLastEventId),
                     () => _events.Count == 0 ? 0 : _events.Last().EventId));
         }

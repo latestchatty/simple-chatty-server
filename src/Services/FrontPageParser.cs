@@ -19,7 +19,7 @@ namespace SimpleChattyServer.Services
         {
             var html = await _downloadService.DownloadWithSharedLogin("https://www.shacknews.com/feed/rss",
                 verifyLoginStatus: false);
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var list = new List<FrontPageArticle>();
                 var p = new Parser(html);
@@ -63,7 +63,7 @@ namespace SimpleChattyServer.Services
         public async Task<V1StoryModel> GetArticle(int storyId)
         {
             var html = await _downloadService.DownloadWithSharedLogin($"https://www.shacknews.com/article/{storyId}");
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var p = new Parser(html);
                 p.Seek(1, "<div class=\"article-lead-middle\">");

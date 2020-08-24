@@ -68,7 +68,7 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/frame_laryn.x?root={threadId}";
             var html = await _downloadService.DownloadWithSharedLogin(url, verifyLoginStatus: false);
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 if (!html.Contains("</html>"))
                     throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
@@ -106,7 +106,7 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/chatty?id={id}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 if (!html.Contains("</html>"))
                     throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
@@ -215,7 +215,7 @@ namespace SimpleChattyServer.Services
         {
             var html = await _downloadService.DownloadWithSharedLogin($"https://www.shacknews.com/chatty?id={postId}");
             
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var p = new Parser(html);
                 p.Seek(1, "<input type=\"hidden\" name=\"content_type_id\"");

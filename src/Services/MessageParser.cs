@@ -28,7 +28,7 @@ namespace SimpleChattyServer.Services
                 $"https://www.shacknews.com/messages/{folderName}?page={page}",
                 username, password);
 
-            return await Task.Run(() =>
+            return await LongRunningTask.Run(() =>
             {
                 var p = new Parser(html);
 

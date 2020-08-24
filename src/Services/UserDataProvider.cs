@@ -35,7 +35,7 @@ namespace SimpleChattyServer.Services
 
             try
             {
-                return await Task.Run(() =>
+                return await LongRunningTask.Run(() =>
                     _lock.WithReadLock(nameof(GetUserData),
                         () =>
                         {
@@ -59,7 +59,7 @@ namespace SimpleChattyServer.Services
             if (string.IsNullOrEmpty(username))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, "Username must be provided.");
 
-            await Task.Run(() =>
+            await LongRunningTask.Run(() =>
                 _lock.WithWriteLock(nameof(UpdateUserData),
                     () =>
                     {
