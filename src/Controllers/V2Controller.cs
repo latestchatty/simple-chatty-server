@@ -128,15 +128,21 @@ namespace SimpleChattyServer.Controllers
                 new ParallelOptions { MaxDegreeOfParallelism = 4 },
                 postId =>
                 {
-                    var thread = _chattyProvider.GetThreadTree(postId).GetAwaiter().GetResult();
-                    lock (list)
+                    try
                     {
-                        list.Add(
-                            new GetThreadPostCountResponse.Thread
-                            {
-                                ThreadId = thread.ThreadId,
-                                PostCount = thread.Posts.Count
-                            });
+                        var thread = _chattyProvider.GetThreadTree(postId).GetAwaiter().GetResult();
+                        lock (list)
+                        {
+                            list.Add(
+                                new GetThreadPostCountResponse.Thread
+                                {
+                                    ThreadId = thread.ThreadId,
+                                    PostCount = thread.Posts.Count
+                                });
+                        }
+                    }
+                    catch (MissingThreadException)
+                    {
                     }
                 }));
             return new GetThreadPostCountResponse { Threads = list };
