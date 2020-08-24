@@ -95,7 +95,10 @@ namespace SimpleChattyServer.Services
                 {
                     var sw = Stopwatch.StartNew();
                     _state.Events = await _eventProvider.CloneEventsList();
-                    using var fileStream = File.Create(GetStateFilePath());
+                    var filePath = GetStateFilePath();
+                    if (File.Exists(filePath))
+                        File.Move(filePath, filePath + ".bak", overwrite: true);
+                    using var fileStream = File.Create(filePath);
                     using var gzipStream = new GZipStream(fileStream, CompressionLevel.Fastest);
                     await JsonSerializer.SerializeAsync(gzipStream, _state);
                     _logger.LogInformation($"Saved state in {sw.Elapsed}");
