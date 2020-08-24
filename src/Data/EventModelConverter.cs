@@ -12,6 +12,7 @@ namespace SimpleChattyServer.Data
 
         public override EventModel Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
+            var innerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             var eventModel = new EventModel();
             if (reader.TokenType != JsonTokenType.StartObject)
                 Throw();
@@ -29,12 +30,12 @@ namespace SimpleChattyServer.Data
                     case "eventDate":
                         if (!reader.Read())
                             Throw();
-                        eventModel.EventDate = _dateTimeOffsetConverter.Read(ref reader, typeof(DateTimeOffset), options);
+                        eventModel.EventDate = _dateTimeOffsetConverter.Read(ref reader, typeof(DateTimeOffset), innerOptions);
                         break;
                     case "eventType":
                         if (!reader.Read())
                             Throw();
-                        eventModel.EventType = _eventTypeConverter.Read(ref reader, typeof(EventType), options);
+                        eventModel.EventType = _eventTypeConverter.Read(ref reader, typeof(EventType), innerOptions);
                         break;
                     case "eventData":
                         if (!reader.Read())
@@ -42,19 +43,19 @@ namespace SimpleChattyServer.Data
                         switch (eventModel.EventType)
                         {
                             case EventType.CategoryChange:
-                                eventModel.EventData = JsonSerializer.Deserialize<CategoryChangeEventDataModel>(ref reader);
+                                eventModel.EventData = JsonSerializer.Deserialize<CategoryChangeEventDataModel>(ref reader, innerOptions);
                                 break;
                             case EventType.LolCountsUpdate:
-                                eventModel.EventData = JsonSerializer.Deserialize<LolCountsUpdateEventDataModel>(ref reader);
+                                eventModel.EventData = JsonSerializer.Deserialize<LolCountsUpdateEventDataModel>(ref reader, innerOptions);
                                 break;
                             case EventType.NewPost:
-                                eventModel.EventData = JsonSerializer.Deserialize<NewPostEventDataModel>(ref reader);
+                                eventModel.EventData = JsonSerializer.Deserialize<NewPostEventDataModel>(ref reader, innerOptions);
                                 break;
                             case EventType.PostChange:
-                                eventModel.EventData = JsonSerializer.Deserialize<PostChangeEventDataModel>(ref reader);
+                                eventModel.EventData = JsonSerializer.Deserialize<PostChangeEventDataModel>(ref reader, innerOptions);
                                 break;
                             case EventType.ReadStatusUpdate:
-                                eventModel.EventData = JsonSerializer.Deserialize<ReadStatusUpdateEventDataModel>(ref reader);
+                                eventModel.EventData = JsonSerializer.Deserialize<ReadStatusUpdateEventDataModel>(ref reader, innerOptions);
                                 break;
                             default:
                                 Throw();
