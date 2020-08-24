@@ -166,18 +166,21 @@ namespace SimpleChattyServer.Services
             var currentPage = 1;
             var lastPage = 1;
             var newPages = new List<ScrapeState.Page>();
+            var seenThreadIds = new HashSet<int>();
 
             while (currentPage <= lastPage)
             {
-                var (html, chattyPage) =
+                var previousPage =
                     previousPages != null && previousPages.Count >= currentPage
-                    ? await _chattyParser.GetChattyPage(currentPage, previousPages[currentPage - 1].Html,
-                        previousPages[currentPage - 1].ChattyPage)
+                    ? previousPages[currentPage - 1]
+                    : null;
+                var (html, chattyPage) =
+                    previousPage != null
+                    ? await _chattyParser.GetChattyPage(currentPage, previousPage.Html, previousPage.ChattyPage)
                     : await _chattyParser.GetChattyPage(currentPage);
                 newPages.Add(new ScrapeState.Page { Html = html, ChattyPage = chattyPage });
                 lastPage = chattyPage.LastPage;
 
-                var seenThreadIds = new HashSet<int>();
                 foreach (var thread in chattyPage.Threads)
                 {
                     var threadId = thread.Posts[0].Id;
@@ -185,10 +188,31 @@ namespace SimpleChattyServer.Services
                     // there is a race condition where the same thread could appear on both pages 1 and 2 because we
                     // download them at slightly different times
                     if (seenThreadIds.Contains(threadId))
-                        continue;
+                    {
+                        for (var i = 0; i < chatty.Threads.Count; i++)
+                            if (chatty.Threads[i].ThreadId == threadId)
+                                chatty.Threads[i] = thread;
+                    }
+                    else
+                    {
+                        chatty.Threads.Add(thread);
+                        seenThreadIds.Add(thread.ThreadId);
+                    }
+                }
 
-                    chatty.Threads.Add(thread);
-                    seenThreadIds.Add(thread.ThreadId);
+                // the other race condition is that a thread can be missed because it moved from page 2 to 1 in
+                // between our requests of pages 1 and 2. let's add the old thread here, and if it turns out that we
+                // see it on page 2, then we'll overwrite this old version
+                if (previousPage != null)
+                {
+                    foreach (var previousThread in previousPage.ChattyPage.Threads)
+                    {
+                        if (!seenThreadIds.Contains(previousThread.ThreadId))
+                        {
+                            chatty.Threads.Add(previousThread);
+                            seenThreadIds.Add(previousThread.ThreadId);
+                        }
+                    }
                 }
 
                 currentPage++;
