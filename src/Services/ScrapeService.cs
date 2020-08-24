@@ -54,7 +54,7 @@ namespace SimpleChattyServer.Services
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await LoadState();
-            StartTimer(runImmediately: true);
+            StartTimer(0);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -63,8 +63,8 @@ namespace SimpleChattyServer.Services
             await SaveState();
         }
 
-        private void StartTimer(bool runImmediately) =>
-            _timer.Change(runImmediately ? TimeSpan.Zero : TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        private void StartTimer(double seconds) =>
+            _timer.Change(TimeSpan.FromSeconds(seconds), Timeout.InfiniteTimeSpan);
 
         private void StopTimer() =>
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -79,7 +79,7 @@ namespace SimpleChattyServer.Services
                 _state = await JsonSerializer.DeserializeAsync<ScrapeState>(gzipStream);
                 _state.Chatty.SetDictionaries();
                 await _eventProvider.PrePopulate(_state.Chatty, _state.LolCounts, _state.Events);
-                _logger.LogInformation($"Loaded state in {sw.Elapsed}. Last event is #{_eventProvider.GetLastEventId()}.");
+                _logger.LogInformation($"Loaded state in {sw.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
             }
             catch (Exception ex)
             {
@@ -145,7 +145,7 @@ namespace SimpleChattyServer.Services
                         LolCounts = lolCounts
                     };
 
-                _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}. Last event is #{_eventProvider.GetLastEventId()}.");
+                _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
             }
             catch (Exception ex)
             {
@@ -153,7 +153,8 @@ namespace SimpleChattyServer.Services
             }
             finally
             {
-                StartTimer(runImmediately: false);
+                var seconds = 5 - stopwatch.Elapsed.TotalSeconds;
+                StartTimer(seconds < 0 ? 5 : seconds);
             }
         }
 
