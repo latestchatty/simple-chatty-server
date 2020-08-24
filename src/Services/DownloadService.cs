@@ -116,8 +116,6 @@ namespace SimpleChattyServer.Services
             query.Add("supplied-pass", password);
             query.Add("remember-login", "1");
 
-            var queryString = query.ToString();
-
             var request = CreateRequest("https://www.shacknews.com/account/signin",
                 requestedWith: "XMLHttpRequest", method: "POST");
             await WriteRequestBody(request, query.ToString());
@@ -138,7 +136,7 @@ namespace SimpleChattyServer.Services
             request.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
             using var requestStream = await request.GetRequestStreamAsync();
             using var requestStreamWriter = new StreamWriter(requestStream, _utf8Encoding);
-            requestStreamWriter.Write(query);
+            await requestStreamWriter.WriteAsync(query);
         }
     }
 }
