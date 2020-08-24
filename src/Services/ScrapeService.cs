@@ -1,17 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data;
+using SimpleChattyServer.Data.Options;
+using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
     public sealed class ScrapeService : IHostedService, IDisposable
     {
+        private const string STATE_FILENAME = "scrape-state.json.gz";
+
         private readonly ILogger _logger;
         private readonly ChattyParser _chattyParser;
         private readonly ThreadParser _threadParser;
@@ -19,14 +27,13 @@ namespace SimpleChattyServer.Services
         private readonly DownloadService _downloadService;
         private readonly ChattyProvider _chattyProvider;
         private readonly EventProvider _eventProvider;
+        private readonly StorageOptions _storageOptions;
         private readonly Timer _timer;
-        private readonly Dictionary<int, (string Html, ChattyPage Page)> _previousPages =
-            new Dictionary<int, (string Html, ChattyPage Page)>();
-        private (string Json, ChattyLolCounts LolCounts) _previousLols = (null, null);
+        private ScrapeState _state;
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
             LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider,
-            EventProvider eventProvider)
+            EventProvider eventProvider, IOptions<StorageOptions> storageOptions)
         {
             _logger = logger;
             _chattyParser = chattyParser;
@@ -35,6 +42,7 @@ namespace SimpleChattyServer.Services
             _downloadService = downloadService;
             _chattyProvider = chattyProvider;
             _eventProvider = eventProvider;
+            _storageOptions = storageOptions.Value;
             _timer = new Timer(Scrape, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
@@ -43,16 +51,16 @@ namespace SimpleChattyServer.Services
             _timer.Dispose();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
+            await LoadState();
             StartTimer(runImmediately: true);
-            return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             StopTimer();
-            return Task.CompletedTask;
+            await SaveState();
         }
 
         private void StartTimer(bool runImmediately) =>
@@ -60,6 +68,47 @@ namespace SimpleChattyServer.Services
 
         private void StopTimer() =>
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+        private async Task LoadState()
+        {
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                using var fileStream = File.OpenRead(GetStateFilePath());
+                using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+                _state = await JsonSerializer.DeserializeAsync<ScrapeState>(gzipStream);
+                _state.Chatty.SetDictionaries();
+                await _eventProvider.PrePopulate(_state.Chatty, _state.LolCounts, _state.Events);
+                _logger.LogInformation($"Loaded state in {sw.Elapsed}. Last event is #{_eventProvider.GetLastEventId()}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to read state; using new state.");
+            }
+        }
+
+        private async Task SaveState()
+        {
+            try
+            {
+                if (_state != null)
+                {
+                    var sw = Stopwatch.StartNew();
+                    _state.Events = await _eventProvider.CloneEventsList();
+                    using var fileStream = File.Create(GetStateFilePath());
+                    using var gzipStream = new GZipStream(fileStream, CompressionLevel.Fastest);
+                    await JsonSerializer.SerializeAsync(gzipStream, _state);
+                    _logger.LogInformation($"Saved state in {sw.Elapsed}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save state.");
+            }
+        }
+
+        private string GetStateFilePath() =>
+            Path.Combine(_storageOptions.DataPath, STATE_FILENAME);
 
         private async void Scrape(object state)
         {
@@ -69,24 +118,34 @@ namespace SimpleChattyServer.Services
             try
             {
                 var lolTask = _lolParser.DownloadChattyLolCounts(
-                    _previousLols.Json, _previousLols.LolCounts);
+                    _state?.LolJson, _state?.LolCounts);
 
-                var newChatty = await GetChattyWithoutBodies();
+                var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages);
 
-                List<int> threadIdsWithMissingPostBodies;
-                if (_chattyProvider.Chatty == null)
-                    threadIdsWithMissingPostBodies = newChatty.ThreadsByRootId.Keys.ToList();
-                else
-                    CopyPostBodies(_chattyProvider.Chatty, newChatty, out threadIdsWithMissingPostBodies);
+                await CopyPostBodies(newChatty);
+
+                var threadIdsWithMissingPostBodies = new List<int>();
+                foreach (var thread in newChatty.Threads)
+                    if (thread.Posts.Any(x => x.Body == null))
+                        threadIdsWithMissingPostBodies.Add(thread.ThreadId);
 
                 await DownloadPostBodies(newChatty, threadIdsWithMissingPostBodies);
 
-                var (lolJson, lolCounts) = _previousLols = await lolTask;
+                var (lolJson, lolCounts) = await lolTask;
 
                 _chattyProvider.Update(newChatty, lolCounts);
                 await _eventProvider.Update(newChatty, lolCounts);
 
-                _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}");
+                _state =
+                    new ScrapeState
+                    {
+                        Chatty = newChatty,
+                        Pages = newPages,
+                        LolJson = lolJson,
+                        LolCounts = lolCounts
+                    };
+
+                _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}. Last event is #{_eventProvider.GetLastEventId()}.");
             }
             catch (Exception ex)
             {
@@ -98,79 +157,72 @@ namespace SimpleChattyServer.Services
             }
         }
 
-        private async Task<Chatty> GetChattyWithoutBodies()
+        private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
+            List<ScrapeState.Page> previousPages)
         {
-            var chatty =
-                new Chatty
-                {
-                    Threads = new List<ChattyThread>(200),
-                    ThreadsByRootId = new Dictionary<int, ChattyThread>(200),
-                    ThreadsByReplyId = new Dictionary<int, ChattyThread>(2000),
-                    PostsById = new Dictionary<int, ChattyPost>(2000)
-                };
+            var chatty = new Chatty { Threads = new List<ChattyThread>(200) };
 
             var currentPage = 1;
             var lastPage = 1;
+            var newPages = new List<ScrapeState.Page>();
 
             while (currentPage <= lastPage)
             {
                 var (html, chattyPage) =
-                    _previousPages.TryGetValue(currentPage, out var prev)
-                    ? await _chattyParser.GetChattyPage(currentPage, prev.Html, prev.Page)
+                    previousPages != null && previousPages.Count >= currentPage
+                    ? await _chattyParser.GetChattyPage(currentPage, previousPages[currentPage - 1].Html,
+                        previousPages[currentPage - 1].ChattyPage)
                     : await _chattyParser.GetChattyPage(currentPage);
-                _previousPages[currentPage] = (html, chattyPage);
+                newPages.Add(new ScrapeState.Page { Html = html, ChattyPage = chattyPage });
                 lastPage = chattyPage.LastPage;
 
+                var seenThreadIds = new HashSet<int>();
                 foreach (var thread in chattyPage.Threads)
                 {
                     var threadId = thread.Posts[0].Id;
 
                     // there is a race condition where the same thread could appear on both pages 1 and 2 because we
                     // download them at slightly different times
-                    if (chatty.ThreadsByReplyId.ContainsKey(threadId))
+                    if (seenThreadIds.Contains(threadId))
                         continue;
 
-                    foreach (var post in thread.Posts)
-                    {
-                        chatty.ThreadsByReplyId.Add(post.Id, thread);
-                        chatty.PostsById.Add(post.Id, post);
-                    }
-
-                    chatty.ThreadsByRootId.Add(threadId, thread);
                     chatty.Threads.Add(thread);
+                    seenThreadIds.Add(thread.ThreadId);
                 }
 
                 currentPage++;
             }
 
-            return chatty;
+            chatty.SetDictionaries();
+            return (newPages, chatty);
         }
 
-        private void CopyPostBodies(Chatty oldChatty, Chatty newChatty,
-            out List<int> threadIdsWithMissingPostBodies)
+        private async Task CopyPostBodies(Chatty newChatty)
         {
-            threadIdsWithMissingPostBodies = new List<int>();
+            if (_state == null)
+                return;
 
-            foreach (var newThread in newChatty.Threads)
+            await Task.Run(() =>
             {
-                var anyMissingBodies = false;
+                var oldPostsById = (
+                    from page in _state.Pages
+                    from thread in page.ChattyPage.Threads
+                    from post in thread.Posts
+                    select post
+                    ).ToDictionary(x => x.Id);
 
-                foreach (var newPost in newThread.Posts)
+                foreach (var newThread in newChatty.Threads)
                 {
-                    if (oldChatty.PostsById.TryGetValue(newPost.Id, out var oldPost))
+                    foreach (var newPost in newThread.Posts)
                     {
-                        newPost.Body = oldPost.Body;
-                        newPost.Date = oldPost.Date;
-                    }
-                    else
-                    {
-                        anyMissingBodies = true;
+                        if (oldPostsById.TryGetValue(newPost.Id, out var oldPost))
+                        {
+                            newPost.Body = oldPost.Body;
+                            newPost.Date = oldPost.Date;
+                        }
                     }
                 }
-
-                if (anyMissingBodies)
-                    threadIdsWithMissingPostBodies.Add(newThread.Posts[0].Id);
-            }
+            });
         }
 
         private async Task DownloadPostBodies(Chatty newChatty, List<int> threadIdsWithMissingPostBodies)

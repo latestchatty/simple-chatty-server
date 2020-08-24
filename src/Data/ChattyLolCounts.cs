@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SimpleChattyServer.Data
 {
     public sealed class ChattyLolCounts
     {
+        [JsonConverter(typeof(IntDictionaryConverter<ThreadLolCounts>))]
         public Dictionary<int, ThreadLolCounts> CountsByThreadId { get; set; }
 
         public ThreadLolCounts GetThreadLolCounts(int threadId) =>

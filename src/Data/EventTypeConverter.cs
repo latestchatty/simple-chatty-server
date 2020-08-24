@@ -7,7 +7,7 @@ namespace SimpleChattyServer.Data
     public sealed class EventTypeConverter : JsonConverter<EventType>
     {
         public override EventType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            throw new NotImplementedException();
+            Parse(reader.GetString());
 
         public override void Write(Utf8JsonWriter writer, EventType value, JsonSerializerOptions options) =>
             writer.WriteStringValue(ToJsonString(value));
@@ -22,6 +22,19 @@ namespace SimpleChattyServer.Data
                 case EventType.ReadStatusUpdate: return "readStatusUpdate";
                 case EventType.PostChange: return "postChange";
                 default: throw new ArgumentOutOfRangeException(nameof(self));
+            }
+        }
+
+        private static EventType Parse(string str)
+        {
+            switch (str)
+            {
+                case "newPost": return EventType.NewPost;
+                case "categoryChange": return EventType.CategoryChange;
+                case "lolCountsUpdate": return EventType.LolCountsUpdate;
+                case "readStatusUpdate": return EventType.ReadStatusUpdate;
+                case "postChange": return EventType.PostChange;
+                default: throw new ArgumentOutOfRangeException(nameof(str));
             }
         }
     }

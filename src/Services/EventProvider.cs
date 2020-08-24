@@ -24,6 +24,61 @@ namespace SimpleChattyServer.Services
             _threadParser = threadParser;
         }
 
+        public async Task<List<EventModel>> CloneEventsList()
+        {
+            return await Task.Run(() =>
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    return new List<EventModel>(_events);
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            });
+        }
+
+        public async Task Start(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
+        {
+            if (_chatty != null || _chattyLolCounts != null)
+                throw new InvalidOperationException($"{nameof(EventProvider)} already started.");
+
+            await Task.Run(() =>
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _chatty = newChatty;
+                    _chattyLolCounts = newChattyLolCounts;
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            });
+        }
+
+        public async Task PrePopulate(Chatty newChatty, ChattyLolCounts newChattyLolCounts, List<EventModel> events)
+        {
+            await Task.Run(() =>
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _chatty = newChatty;
+                    _chattyLolCounts = newChattyLolCounts;
+                    _events.Clear();
+                    _events.AddRange(events);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            });
+        }
+
         public async Task Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
         {
             await Task.Run(() =>
