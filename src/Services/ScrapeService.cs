@@ -57,10 +57,10 @@ namespace SimpleChattyServer.Services
             StartTimer(0);
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken cancellationToken)
         {
             StopTimer();
-            await SaveState();
+            return Task.CompletedTask;
         }
 
         private void StartTimer(double seconds) =>
@@ -101,7 +101,6 @@ namespace SimpleChattyServer.Services
                     using var fileStream = File.Create(filePath);
                     using var gzipStream = new GZipStream(fileStream, CompressionLevel.Fastest);
                     await JsonSerializer.SerializeAsync(gzipStream, _state);
-                    _logger.LogInformation($"Saved state in {sw.Elapsed}");
                 }
             }
             catch (Exception ex)
@@ -147,6 +146,8 @@ namespace SimpleChattyServer.Services
                         LolJson = lolJson,
                         LolCounts = lolCounts
                     };
+
+                await SaveState();
 
                 _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
             }
