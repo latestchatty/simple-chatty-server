@@ -15,12 +15,16 @@ namespace SimpleChattyServer.Services
     {
         private readonly ILogger _logger;
         private readonly StorageOptions _storageOptions;
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly LoggedReaderWriterLockSlim _lock;
 
         public UserDataProvider(ILogger<UserDataProvider> logger, IOptions<StorageOptions> storageOptions)
         {
             _logger = logger;
             _storageOptions = storageOptions.Value;
+
+            _lock = new LoggedReaderWriterLockSlim(
+                nameof(UserDataProvider),
+                x => _logger.LogDebug(x));
         }
 
         public async Task<UserData> GetUserData(string username)
@@ -28,22 +32,16 @@ namespace SimpleChattyServer.Services
             try
             {
                 return await Task.Run(() =>
-                {
-                    _lock.EnterReadLock();
-                    try
-                    {
-                        var filePath = GetFilePath(username);
-                        if (!File.Exists(filePath))
-                            return new UserData();
+                    _lock.WithReadLock(nameof(GetUserData),
+                        () =>
+                        {
+                            var filePath = GetFilePath(username);
+                            if (!File.Exists(filePath))
+                                return new UserData();
 
-                        using var stream = File.OpenRead(filePath);
-                        return JsonSerializer.DeserializeAsync<UserData>(stream).GetAwaiter().GetResult();
-                    }
-                    finally
-                    {
-                        _lock.ExitReadLock();
-                    }
-                });
+                            using var stream = File.OpenRead(filePath);
+                            return JsonSerializer.DeserializeAsync<UserData>(stream).GetAwaiter().GetResult();
+                        }));
             }
             catch (Exception ex)
             {
@@ -55,33 +53,27 @@ namespace SimpleChattyServer.Services
         public async Task UpdateUserData(string username, Action<UserData> action)
         {
             await Task.Run(() =>
-            {
-                _lock.EnterWriteLock();
-                try
-                {
-                    var filePath = GetFilePath(username);
-
-                    UserData userData;
-                    if (File.Exists(filePath))
+                _lock.WithWriteLock(nameof(UpdateUserData),
+                    () =>
                     {
-                        using var stream = File.OpenRead(filePath);
-                        userData = JsonSerializer.DeserializeAsync<UserData>(stream).GetAwaiter().GetResult();
-                    }
-                    else
-                    {
-                        userData = new UserData();
-                    }
+                        var filePath = GetFilePath(username);
 
-                    action(userData);
+                        UserData userData;
+                        if (File.Exists(filePath))
+                        {
+                            using var stream = File.OpenRead(filePath);
+                            userData = JsonSerializer.DeserializeAsync<UserData>(stream).GetAwaiter().GetResult();
+                        }
+                        else
+                        {
+                            userData = new UserData();
+                        }
 
-                    using (var stream = File.Create(filePath))
-                        JsonSerializer.SerializeAsync(stream, userData).GetAwaiter().GetResult();
-                }
-                finally
-                {
-                    _lock.ExitWriteLock();
-                }
-            });
+                        action(userData);
+
+                        using (var stream = File.Create(filePath))
+                            JsonSerializer.SerializeAsync(stream, userData).GetAwaiter().GetResult();
+                    }));
         }
 
         private string GetFilePath(string username)

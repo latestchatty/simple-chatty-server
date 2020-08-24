@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Net;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Exceptions;
