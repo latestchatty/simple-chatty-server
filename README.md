@@ -17,7 +17,7 @@ This service powers `winchatty.com`. [View the API documentation](https://github
 
 ```
 systemctl stop simple-chatty-server.service && \
-rm SimpleChattyServer && \
+mv SimpleChattyServer SimpleChattyServer.bak && \
 aws s3 cp s3://simple-chatty-server/SimpleChattyServer.gz /opt/simple-chatty-server/ && \
 gunzip /opt/simple-chatty-server/SimpleChattyServer.gz && \
 chmod +x /opt/simple-chatty-server/SimpleChattyServer && \
