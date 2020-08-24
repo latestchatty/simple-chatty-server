@@ -261,9 +261,9 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpGet("getNewestEventId")]
-        public GetNewestEventIdResponse GetNewestEventId()
+        public async Task<GetNewestEventIdResponse> GetNewestEventId()
         {
-            return new GetNewestEventIdResponse { EventId = _eventProvider.GetLastEventId() };
+            return new GetNewestEventIdResponse { EventId = await _eventProvider.GetLastEventId() };
         }
 
         [HttpGet("waitForEvent")]
@@ -275,12 +275,12 @@ namespace SimpleChattyServer.Controllers
 
             while (stopwatch.Elapsed < maxTime)
             {
-                var events = _eventProvider.GetEvents(lastEventId);
+                var events = await _eventProvider.GetEvents(lastEventId);
                 if (events == null)
                 {
                     return new WaitForEventResponse
                     {
-                        LastEventId = _eventProvider.GetLastEventId(),
+                        LastEventId = await _eventProvider.GetLastEventId(),
                         Events = new List<EventModel>(),
                         TooManyEvents = true
                     };
@@ -305,14 +305,14 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpGet("pollForEvent")]
-        public WaitForEventResponse PollForEvent(int lastEventId)
+        public async Task<WaitForEventResponse> PollForEvent(int lastEventId)
         {
-            var events = _eventProvider.GetEvents(lastEventId);
+            var events = await _eventProvider.GetEvents(lastEventId);
             if (events == null)
             {
                 return new WaitForEventResponse
                 {
-                    LastEventId = _eventProvider.GetLastEventId(),
+                    LastEventId = await _eventProvider.GetLastEventId(),
                     Events = new List<EventModel>(),
                     TooManyEvents = true
                 };

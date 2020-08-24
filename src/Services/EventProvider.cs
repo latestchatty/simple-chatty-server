@@ -303,40 +303,46 @@ namespace SimpleChattyServer.Services
 
         }
 
-        public List<EventModel> GetEvents(int lastEventId)
+        public async Task<List<EventModel>> GetEvents(int lastEventId)
         {
-            _lock.EnterReadLock();
-            try
+            return await Task.Run(() =>
             {
-                var minEventId = _events.Count == 0 ? 0 : _events[0].EventId;
-                var maxEventId = _events.Count == 0 ? 0 : _events[_events.Count - 1].EventId;
-                if (lastEventId < minEventId - 1 || lastEventId > maxEventId)
-                    return null;
+                _lock.EnterReadLock();
+                try
+                {
+                    var minEventId = _events.Count == 0 ? 0 : _events[0].EventId;
+                    var maxEventId = _events.Count == 0 ? 0 : _events[_events.Count - 1].EventId;
+                    if (lastEventId < minEventId - 1 || lastEventId > maxEventId)
+                        return null;
 
-                var list = new List<EventModel>();
-                for (var i = _events.Count - 1; i >= 0 && _events[i].EventId > lastEventId; i--)
-                    list.Add(_events[i]);
+                    var list = new List<EventModel>();
+                    for (var i = _events.Count - 1; i >= 0 && _events[i].EventId > lastEventId; i--)
+                        list.Add(_events[i]);
 
-                list.Reverse();
-                return list;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
+                    list.Reverse();
+                    return list;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            });
         }
 
-        public int GetLastEventId()
+        public async Task<int> GetLastEventId()
         {
-            _lock.EnterReadLock();
-            try
+            return await Task.Run(() =>
             {
-                return _events.Count == 0 ? 0 : _events.Last().EventId;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
+                _lock.EnterReadLock();
+                try
+                {
+                    return _events.Count == 0 ? 0 : _events.Last().EventId;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            });
         }
 
         private static Dictionary<int, PostModel> GetPostModelsById(

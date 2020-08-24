@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using SimpleChattyServer.Data;
@@ -12,17 +13,19 @@ namespace SimpleChattyServer.Services
         private readonly LolParser _lolParser;
         private readonly DownloadService _downloadService;
         private readonly EmojiConverter _emojiConverter;
+        private readonly EventProvider _eventProvider;
 
         public Chatty Chatty { get; private set; }
         public ChattyLolCounts LolCounts { get; private set; }
 
         public ChattyProvider(ThreadParser threadParser, LolParser lolParser, DownloadService downloadService,
-            EmojiConverter emojiConverter)
+            EmojiConverter emojiConverter, EventProvider eventProvider)
         {
             _threadParser = threadParser;
             _lolParser = lolParser;
             _downloadService = downloadService;
             _emojiConverter = emojiConverter;
+            _eventProvider = eventProvider;
         }
 
         public void Update(Chatty chatty, ChattyLolCounts lolCounts)
@@ -111,12 +114,11 @@ namespace SimpleChattyServer.Services
             query.Add("parent_url", "/chatty");
             query.Add("body", _emojiConverter.ConvertEmojisToEntities(body));
             
+            var lastEventId = await _eventProvider.GetLastEventId();
             var response = await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/post_chatty.x",
                 username, password, query.ToString());
             
-            await Task.Delay(TimeSpan.FromSeconds(10));
-
             if (response.Contains("You must be logged in to post"))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,
                     "Unable to log into user account.");
@@ -131,6 +133,24 @@ namespace SimpleChattyServer.Services
                     "You cannot reply to a nuked thread or subthread.");
             if (!response.Contains("fixup_postbox_parent_for_remove("))
                 throw new Api500Exception("Unexpected response from server: " + response);
+
+            // wait for the event to appear
+            var sw = Stopwatch.StartNew();
+            var maxTimeSpan = TimeSpan.FromSeconds(15);
+            while (sw.Elapsed < maxTimeSpan)
+            {
+                foreach (var ev in await _eventProvider.GetEvents(lastEventId))
+                {
+                    if (ev.EventType == EventType.NewPost)
+                    {
+                        var eventData = (NewPostEventDataModel)ev.EventData;
+                        if (eventData.Post.Author.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                            return;
+                    }
+                    lastEventId = ev.EventId;
+                }
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
         }
 
         public async Task SetPostCategory(string username, string password, int postId, ModerationFlag category)
