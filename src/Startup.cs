@@ -61,6 +61,7 @@ namespace SimpleChattyServer
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseResponseCompression();
+            app.UseMiddleware<RequestLogMiddleware>();
             app.UseCors();
             app.UseRouting();
             app.UseEndpoints(
