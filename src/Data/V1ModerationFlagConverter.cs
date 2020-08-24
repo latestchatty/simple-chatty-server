@@ -35,7 +35,7 @@ namespace SimpleChattyServer.Data
                 case "nws": return ModerationFlag.Nws;
                 case "stupid": return ModerationFlag.Stupid;
                 case "political": return ModerationFlag.Political;
-                case "offtopic": return ModerationFlag.Tangent;
+                case "offtopic": case "tangent": return ModerationFlag.Tangent;
                 case "informative": return ModerationFlag.Informative;
                 case "nuked": return ModerationFlag.Nuked;
                 default: throw new ArgumentOutOfRangeException(str);
