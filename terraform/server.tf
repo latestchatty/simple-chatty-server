@@ -45,6 +45,13 @@ resource "aws_instance" "simple_chatty_server" {
   }
 
   user_data = templatefile("provision.sh", { efs = aws_efs_file_system.simple_chatty_server.dns_name })
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      ami
+    ]
+  }
 }
 
 resource "aws_eip" "simple_chatty_server" {

@@ -41,3 +41,25 @@ resource "aws_iam_instance_profile" "simple_chatty_server" {
   name = aws_iam_role.simple_chatty_server.name
   role = aws_iam_role.simple_chatty_server.name
 }
+
+data "aws_iam_policy_document" "backup_assume_role" {
+  version = "2012-10-17"
+  statement {
+    actions = ["sts:AssumeRole"]
+    effect = "Allow"
+    principals {
+      type = "Service"
+      identifiers = ["backup.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "backup" {
+  name = "AWSBackup"
+  assume_role_policy = data.aws_iam_policy_document.backup_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "backup_AWSBackupServiceRolePolicyForBackup" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+  role = aws_iam_role.backup.name
+}
