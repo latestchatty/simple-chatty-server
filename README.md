@@ -15,12 +15,15 @@ This service powers `winchatty.com`. [View the API documentation](https://github
 
 ## Updating an existing deployment
 
+Run as root:
+
 ```
+cd /opt/simple-chatty-server && \
 systemctl stop simple-chatty-server.service && \
 mv SimpleChattyServer SimpleChattyServer.bak && \
 aws s3 cp s3://simple-chatty-server/SimpleChattyServer.gz /opt/simple-chatty-server/ && \
 gunzip /opt/simple-chatty-server/SimpleChattyServer.gz && \
 chmod +x /opt/simple-chatty-server/SimpleChattyServer && \
 systemctl start simple-chatty-server.service && \
-journalctl -f | grep Scrape
+journalctl -f | less
 ```
