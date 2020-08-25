@@ -28,74 +28,71 @@ namespace SimpleChattyServer.Services
                 $"https://www.shacknews.com/messages/{folderName}?page={page}",
                 username, password);
 
-            return await LongRunningTask.Run(() =>
-            {
-                var p = new Parser(html);
+            var p = new Parser(html);
 
-                var messagePage =
-                    new MessagePage
-                    {
-                        Messages = new List<MessageModel>()
-                    };
-
-                p.Seek(1, "<h2>Message Center</h2>");
-
-                if (p.Peek(1, "<div class=\"showing-column\">") == -1)
+            var messagePage =
+                new MessagePage
                 {
-                    messagePage.TotalCount = 0;
-                    messagePage.LastPage = 1;
+                    Messages = new List<MessageModel>()
+                };
+
+            p.Seek(1, "<h2>Message Center</h2>");
+
+            if (p.Peek(1, "<div class=\"showing-column\">") == -1)
+            {
+                messagePage.TotalCount = 0;
+                messagePage.LastPage = 1;
+            }
+            else
+            {
+                messagePage.TotalCount = int.Parse(p.Clip(
+                    new[] { "<div class=\"showing-column\">", ">", "of", " " },
+                    "</div>"));
+                messagePage.LastPage = (int)Math.Ceiling((double)messagePage.TotalCount / messagesPerPage);
+                p.Seek(1, "<ul id=\"messages\">");
+            }
+
+            while (p.Peek(1, "<li class=\"message") != -1)
+            {
+                var message = new MessageModel();
+                var liClasses = p.Clip(
+                    new[] { "<li class=\"message", "\"" },
+                    "\"");
+                if (!liClasses.Contains("read"))
+                    message.Unread = true;
+
+                message.Id = int.Parse(p.Clip(
+                    new[] { "<input type=\"checkbox\" class=\"mid\" name=\"messages[]\"", "value=", "\"" },
+                    "\">"));
+
+                var otherUser = WebUtility.HtmlDecode(p.Clip(
+                    new[] { "<span class=\"message-username\"", ">" },
+                    "</span>"));
+                if (folder == Mailbox.Inbox)
+                {
+                    message.From = otherUser;
+                    message.To = username;
                 }
                 else
                 {
-                    messagePage.TotalCount = int.Parse(p.Clip(
-                        new[] { "<div class=\"showing-column\">", ">", "of", " " },
-                        "</div>"));
-                    messagePage.LastPage = (int)Math.Ceiling((double)messagePage.TotalCount / messagesPerPage);
-                    p.Seek(1, "<ul id=\"messages\">");
+                    message.From = username;
+                    message.To = otherUser;
                 }
 
-                while (p.Peek(1, "<li class=\"message") != -1)
-                {
-                    var message = new MessageModel();
-                    var liClasses = p.Clip(
-                        new[] { "<li class=\"message", "\"" },
-                        "\"");
-                    if (!liClasses.Contains("read"))
-                        message.Unread = true;
+                message.Subject = WebUtility.HtmlDecode(p.Clip(
+                    new[] { "<span class=\"message-subject\"", ">" },
+                    "</span>"));
+                message.Date = DateParser.Parse(p.Clip(
+                    new[] { "<span class=\"message-date\"", ">" },
+                    "</span>"));
+                message.Body = p.Clip(
+                    new[] { "<div class=\"message-body\"", ">" },
+                    "</div>");
 
-                    message.Id = int.Parse(p.Clip(
-                        new[] { "<input type=\"checkbox\" class=\"mid\" name=\"messages[]\"", "value=", "\"" },
-                        "\">"));
+                messagePage.Messages.Add(message);
+            }
 
-                    var otherUser = WebUtility.HtmlDecode(p.Clip(
-                        new[] { "<span class=\"message-username\"", ">" },
-                        "</span>"));
-                    if (folder == Mailbox.Inbox)
-                    {
-                        message.From = otherUser;
-                        message.To = username;
-                    }
-                    else
-                    {
-                        message.From = username;
-                        message.To = otherUser;
-                    }
-
-                    message.Subject = WebUtility.HtmlDecode(p.Clip(
-                        new[] { "<span class=\"message-subject\"", ">" },
-                        "</span>"));
-                    message.Date = DateParser.Parse(p.Clip(
-                        new[] { "<span class=\"message-date\"", ">" },
-                        "</span>"));
-                    message.Body = p.Clip(
-                        new[] { "<div class=\"message-body\"", ">" },
-                        "</div>");
-
-                    messagePage.Messages.Add(message);
-                }
-
-                return messagePage;
-            });
+            return messagePage;
         }
 
         public async Task SendMessage(string username, string password, string recipient, string subject, string body)

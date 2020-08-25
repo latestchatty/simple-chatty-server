@@ -123,28 +123,22 @@ namespace SimpleChattyServer.Controllers
         {
             var idList = ParseIntList(id, nameof(id), min: 1, max: 200);
             var list = new List<GetThreadPostCountResponse.Thread>(idList.Count);
-            await LongRunningTask.Run(() => Parallel.ForEach(
-                idList,
-                new ParallelOptions { MaxDegreeOfParallelism = 4 },
-                postId =>
+            foreach (var postId in idList)
+            {
+                try
                 {
-                    try
-                    {
-                        var thread = _chattyProvider.GetThreadTree(postId).GetAwaiter().GetResult();
-                        lock (list)
+                    var thread = await _chattyProvider.GetThreadTree(postId);
+                    list.Add(
+                        new GetThreadPostCountResponse.Thread
                         {
-                            list.Add(
-                                new GetThreadPostCountResponse.Thread
-                                {
-                                    ThreadId = thread.ThreadId,
-                                    PostCount = thread.Posts.Count
-                                });
-                        }
-                    }
-                    catch (MissingThreadException)
-                    {
-                    }
-                }));
+                            ThreadId = thread.ThreadId,
+                            PostCount = thread.Posts.Count
+                        });
+                }
+                catch (MissingThreadException)
+                {
+                }
+            }
             return new GetThreadPostCountResponse { Threads = list };
         }
 

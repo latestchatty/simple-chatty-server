@@ -28,17 +28,14 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/chatty?page={page}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
-            return await LongRunningTask.Run(() =>
-            {
-                // remove the progress meter which changes on every load, so that we'll get identical html when nothing
-                // has changed
-                html = _progressMeterRegex.Replace(html, "");
+            // remove the progress meter which changes on every load, so that we'll get identical html when nothing
+            // has changed
+            html = _progressMeterRegex.Replace(html, "");
 
-                // remove the comment count too, it appears on all pages even though some pages haven't changed
-                html = _commentCountRegex.Replace(html, "");
+            // remove the comment count too, it appears on all pages even though some pages haven't changed
+            html = _commentCountRegex.Replace(html, "");
 
-                return (html, html == previousHtml ? previousChattyPage : ParseChattyPage(html));
-            });
+            return (html, html == previousHtml ? previousChattyPage : ParseChattyPage(html));
         }
 
         private ChattyPage ParseChattyPage(string html)

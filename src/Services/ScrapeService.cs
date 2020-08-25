@@ -28,8 +28,9 @@ namespace SimpleChattyServer.Services
         private readonly ChattyProvider _chattyProvider;
         private readonly EventProvider _eventProvider;
         private readonly StorageOptions _storageOptions;
-        private readonly Timer _timer;
         private ScrapeState _state;
+        private Task _task;
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
             LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider,
@@ -43,47 +44,48 @@ namespace SimpleChattyServer.Services
             _chattyProvider = chattyProvider;
             _eventProvider = eventProvider;
             _storageOptions = storageOptions.Value;
-            _timer = new Timer(Scrape, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
         public void Dispose()
         {
-            _timer.Dispose();
+            _cts.Dispose();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await LoadState();
-            StartTimer(0);
+            _task = LongRunningTask.Run(() => ScrapeLoop(_cts.Token).GetAwaiter().GetResult());
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            StopTimer();
-            return Task.CompletedTask;
+            _logger.LogInformation("Stopping scraper");
+            _cts.Cancel();
+            if (_task != null)
+                await _task;
         }
-
-        private void StartTimer(double seconds) =>
-            _timer.Change(TimeSpan.FromSeconds(seconds), Timeout.InfiniteTimeSpan);
-
-        private void StopTimer() =>
-            _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
         private async Task LoadState()
         {
-            try
+            var sw = Stopwatch.StartNew();
+
+            // in case the main save is corrupted, try the backup save
+            foreach (var filePath in new[] { GetStateFilePath(), GetStateFilePath() + ".bak" })
             {
-                var sw = Stopwatch.StartNew();
-                using var fileStream = File.OpenRead(GetStateFilePath());
-                using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
-                _state = await JsonSerializer.DeserializeAsync<ScrapeState>(gzipStream);
-                _state.Chatty.SetDictionaries();
-                await _eventProvider.PrePopulate(_state.Chatty, _state.LolCounts, _state.Events);
-                _logger.LogInformation($"Loaded state in {sw.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to read state; using new state.");
+                try
+                {
+                    using var fileStream = File.OpenRead(filePath);
+                    using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+                    _state = await JsonSerializer.DeserializeAsync<ScrapeState>(gzipStream);
+                    _state.Chatty.SetDictionaries();
+                    await _eventProvider.PrePopulate(_state.Chatty, _state.LolCounts, _state.Events);
+                    _logger.LogInformation($"Loaded state in {sw.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to read state from \"{filePath}\".");
+                }
             }
         }
 
@@ -112,10 +114,28 @@ namespace SimpleChattyServer.Services
         private string GetStateFilePath() =>
             Path.Combine(_storageOptions.DataPath, STATE_FILENAME);
 
-        private async void Scrape(object state)
+
+        private async Task ScrapeLoop(CancellationToken cancel)
+        {
+            while (!cancel.IsCancellationRequested)
+            {
+                var elapsed = await Scrape();
+                var delay = 5 - elapsed.TotalSeconds;
+                if (delay < 0)
+                    delay = 5;
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(delay), cancel);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+        }
+
+        private async Task<TimeSpan> Scrape()
         {
             var stopwatch = Stopwatch.StartNew();
-            StopTimer();
 
             try
             {
@@ -124,7 +144,7 @@ namespace SimpleChattyServer.Services
 
                 var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages);
 
-                await CopyPostBodies(newChatty);
+                CopyPostBodies(newChatty);
 
                 var threadIdsWithMissingPostBodies = new List<int>();
                 foreach (var thread in newChatty.Threads)
@@ -155,11 +175,8 @@ namespace SimpleChattyServer.Services
             {
                 _logger.LogError(ex, $"Scrape failed in {stopwatch.Elapsed}. {ex.Message}");
             }
-            finally
-            {
-                var seconds = 5 - stopwatch.Elapsed.TotalSeconds;
-                StartTimer(seconds < 0 ? 5 : seconds);
-            }
+
+            return stopwatch.Elapsed;
         }
 
         private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
@@ -226,57 +243,46 @@ namespace SimpleChattyServer.Services
             return (newPages, chatty);
         }
 
-        private async Task CopyPostBodies(Chatty newChatty)
+        private void CopyPostBodies(Chatty newChatty)
         {
             if (_state == null)
                 return;
 
-            await LongRunningTask.Run(() =>
-            {
-                var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts).ToDictionary(x => x.Id);
+            var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts).ToDictionary(x => x.Id);
 
-                foreach (var newThread in newChatty.Threads)
+            foreach (var newThread in newChatty.Threads)
+            {
+                foreach (var newPost in newThread.Posts)
                 {
-                    foreach (var newPost in newThread.Posts)
+                    if (oldPostsById.TryGetValue(newPost.Id, out var oldPost))
                     {
-                        if (oldPostsById.TryGetValue(newPost.Id, out var oldPost))
-                        {
-                            newPost.Body = oldPost.Body;
-                            newPost.Date = oldPost.Date;
-                        }
+                        newPost.Body = oldPost.Body;
+                        newPost.Date = oldPost.Date;
                     }
                 }
-            });
+            }
         }
 
         private async Task DownloadPostBodies(Chatty newChatty, List<int> threadIdsWithMissingPostBodies)
         {
-            await LongRunningTask.Run(() =>
+            await ParallelAsync.ForEach(threadIdsWithMissingPostBodies, 4, async threadId =>
             {
-                Parallel.ForEach(
-                    threadIdsWithMissingPostBodies,
-                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
-                    threadId =>
+                foreach (var postBody in await _threadParser.GetThreadBodies(threadId))
+                {
+                    if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
                     {
-                        var postBodies = _threadParser.GetThreadBodies(threadId).GetAwaiter().GetResult();
-
-                        foreach (var postBody in postBodies)
-                        {
-                            if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
-                            {
-                                newChattyPost.Body = postBody.Body;
-                                newChattyPost.Date = postBody.Date;
-                            }
-                        }
-                    });
-
-                // bail if there are still missing bodies. this happens in rare situations where shacknews itself fails
-                // to include a new post in the bodies response
-                foreach (var thread in newChatty.Threads)
-                    foreach (var post in thread.Posts)
-                        if (post.Body == null)
-                            throw new ParsingException($"Missing body for post {post.Id}.");
+                        newChattyPost.Body = postBody.Body;
+                        newChattyPost.Date = postBody.Date;
+                    }
+                }
             });
+
+            // bail if there are still missing bodies. this happens in rare situations where shacknews itself fails
+            // to include a new post in the bodies response
+            foreach (var thread in newChatty.Threads)
+                foreach (var post in thread.Posts)
+                    if (post.Body == null)
+                        throw new ParsingException($"Missing body for post {post.Id}.");
         }
     }
 }

@@ -26,30 +26,27 @@ namespace SimpleChattyServer.Services
             if (json == previousJson)
                 return (json, previousChattyLolCounts);
 
-            return await LongRunningTask.Run(() =>
-            {
-                var response = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(
-                    json);
-                return (json,
-                    new ChattyLolCounts
-                    {
-                        CountsByThreadId = (
-                            from threadPair in response
-                            let threadId = int.Parse(threadPair.Key)
-                            let threadTagsDict = (
-                                from postPair in threadPair.Value
-                                let postId = int.Parse(postPair.Key)
-                                let postLols = (
-                                    from x in postPair.Value
-                                    select new LolModel { Tag = x.Key, Count = int.Parse(x.Value) }
-                                    ).ToList()
-                                select (PostId: postId, PostTags: postLols)
-                                ).ToDictionary(x => x.PostId, x => x.PostTags)
-                            let threadLolCounts = new ThreadLolCounts { CountsByPostId = threadTagsDict }
-                            select (ThreadId: threadId, ThreadLolCounts: threadLolCounts)
-                            ).ToDictionary(x => x.ThreadId, x => x.ThreadLolCounts)
-                    });
-            });
+            var response = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(
+                json);
+            return (json,
+                new ChattyLolCounts
+                {
+                    CountsByThreadId = (
+                        from threadPair in response
+                        let threadId = int.Parse(threadPair.Key)
+                        let threadTagsDict = (
+                            from postPair in threadPair.Value
+                            let postId = int.Parse(postPair.Key)
+                            let postLols = (
+                                from x in postPair.Value
+                                select new LolModel { Tag = x.Key, Count = int.Parse(x.Value) }
+                                ).ToList()
+                            select (PostId: postId, PostTags: postLols)
+                            ).ToDictionary(x => x.PostId, x => x.PostTags)
+                        let threadLolCounts = new ThreadLolCounts { CountsByPostId = threadTagsDict }
+                        select (ThreadId: threadId, ThreadLolCounts: threadLolCounts)
+                        ).ToDictionary(x => x.ThreadId, x => x.ThreadLolCounts)
+                });
         }
 
         public async Task<ThreadLolCounts> DownloadThreadLolCounts(ChattyThread thread)
@@ -63,25 +60,22 @@ namespace SimpleChattyServer.Services
                 verifyLoginStatus: false,
                 postBody: query.ToString());
 
-            return await LongRunningTask.Run(() =>
-            {
-                var response = JsonSerializer.Deserialize<TagsForPosts>(json,
-                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var response = JsonSerializer.Deserialize<TagsForPosts>(json,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
-                return
-                    new ThreadLolCounts
-                    {
-                        CountsByPostId = (
-                            from tag in response.Data
-                            group tag by int.Parse(tag.ThreadId) into post_group
-                            let postLols = (
-                                from x in post_group
-                                select new LolModel { Tag = GetTagName(x.Tag), Count = int.Parse(x.Total) }
-                                ).ToList()
-                            select (PostId: post_group.Key, Tags: postLols)
-                            ).ToDictionary(x => x.PostId, x => x.Tags)
-                    };
-            });
+            return
+                new ThreadLolCounts
+                {
+                    CountsByPostId = (
+                        from tag in response.Data
+                        group tag by int.Parse(tag.ThreadId) into post_group
+                        let postLols = (
+                            from x in post_group
+                            select new LolModel { Tag = GetTagName(x.Tag), Count = int.Parse(x.Total) }
+                            ).ToList()
+                        select (PostId: post_group.Key, Tags: postLols)
+                        ).ToDictionary(x => x.PostId, x => x.Tags)
+                };
         }
 
         private static string GetTagName(string tagNum)
