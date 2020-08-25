@@ -237,6 +237,9 @@ namespace SimpleChattyServer.Services
 
                             if (oldPost.Author != newPost.Author || oldPost.Body != newPost.Body)
                             {
+                                _logger.LogInformation(
+                                    $"postChange: {oldPost.Author} -> {newPost.Author}, " +
+                                    $"\"{oldPost.Body}\" -> \"{newPost.Body}\"");
                                 newEvents.Add(
                                     new EventModel
                                     {
