@@ -235,11 +235,9 @@ namespace SimpleChattyServer.Services
                                     });
                             }
 
-                            if (oldPost.Author != newPost.Author || oldPost.Body != newPost.Body)
+                            if (oldPost.Author != newPost.Author) // detect deleted users
                             {
-                                _logger.LogInformation(
-                                    $"postChange: {oldPost.Author} -> {newPost.Author}, " +
-                                    $"\"{oldPost.Body}\" -> \"{newPost.Body}\"");
+                                _logger.LogInformation($"postChange: {oldPost.Author} -> {newPost.Author}.");
                                 newEvents.Add(
                                     new EventModel
                                     {
