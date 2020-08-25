@@ -268,21 +268,44 @@ namespace SimpleChattyServer.Services
             await ParallelAsync.ForEach(threadIdsWithMissingPostBodies, 4, async threadId =>
             {
                 foreach (var postBody in await _threadParser.GetThreadBodies(threadId))
-                {
-                    if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
-                    {
-                        newChattyPost.Body = postBody.Body;
-                        newChattyPost.Date = postBody.Date;
-                    }
-                }
+                    SetBody(postBody);
             });
 
-            // bail if there are still missing bodies. this happens in rare situations where shacknews itself fails
+            // individually request any straggling bodies. this happens in rare situations where shacknews itself fails
             // to include a new post in the bodies response
+            foreach (var thread in newChatty.Threads)
+            {
+                foreach (var post in thread.Posts)
+                {
+                    if (post.Body == null)
+                    {
+                        try
+                        {
+                            var postBody = await _threadParser.GetPostBody(post.Id);
+                            SetBody(postBody);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Failed to get individual post body for id {post.Id}.");
+                        }
+                    }
+                }
+            }
+
+            // bail if there are still missing bodies
             foreach (var thread in newChatty.Threads)
                 foreach (var post in thread.Posts)
                     if (post.Body == null)
                         throw new ParsingException($"Missing body for post {post.Id}.");
+
+            void SetBody(ChattyPost postBody)
+            {
+                if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
+                {
+                    newChattyPost.Body = postBody.Body;
+                    newChattyPost.Date = postBody.Date;
+                }
+            }
         }
     }
 }

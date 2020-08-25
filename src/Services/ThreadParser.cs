@@ -98,6 +98,26 @@ namespace SimpleChattyServer.Services
             return list;
         }
 
+        public async Task<ChattyPost> GetPostBody(int postId)
+        {
+            var url = $"https://www.shacknews.com/chatty?id={postId}";
+            var html = await _downloadService.DownloadWithSharedLogin(url, verifyLoginStatus: false);
+
+            var p = new Parser(html);
+            var post = new ChattyPost();
+
+            p.Seek(1, $"<li id=\"item_{postId}\"");
+            post.Id = postId;
+            post.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
+                new[] { "<div class=\"postbody\">", ">" },
+                "</div>")))).Trim();
+            post.Date = DateParser.Parse(StripTags(p.Clip(
+                new[] { "<div class=\"postdate\">", ">" },
+                "T</div")) + "T");
+
+            return post;
+        }
+
         public async Task<ChattyThread> GetThreadTree(int id)
         {
             var url = $"https://www.shacknews.com/chatty?id={id}";
