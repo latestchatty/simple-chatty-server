@@ -8,7 +8,7 @@ namespace SimpleChattyServer
 {
     public sealed class LoggedReaderWriterLock
     {
-        private const double MIN_LOG_MSEC = 10;
+        private const double MIN_LOG_MSEC = 50;
         private readonly AsyncReaderWriterLock _lock = new AsyncReaderWriterLock();
         private readonly string _name;
         private readonly Action<string> _logAction;
