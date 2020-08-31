@@ -161,6 +161,9 @@ namespace SimpleChattyServer.Services
                 stopwatch.Step(nameof(DownloadPostBodies));
                 await DownloadPostBodies(newChatty);
 
+                stopwatch.Step(nameof(RemovePostsWithNoBody));
+                RemovePostsWithNoBody(newChatty);
+
                 stopwatch.Step(nameof(_chattyProvider.Update));
                 var (lolJson, lolCounts) = await lolTask;
                 await _eventProvider.Update(newChatty, lolCounts);
@@ -303,33 +306,6 @@ namespace SimpleChattyServer.Services
                     SetBody(postBody);
             });
 
-            // individually request any straggling bodies. this happens in rare situations where shacknews itself fails
-            // to include a new post in the bodies response
-            foreach (var thread in newChatty.Threads)
-            {
-                foreach (var post in thread.Posts)
-                {
-                    if (post.Body == null)
-                    {
-                        try
-                        {
-                            var postBody = await _threadParser.GetPostBody(post.Id);
-                            SetBody(postBody);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, $"Failed to get individual post body for id {post.Id}.");
-                        }
-                    }
-                }
-            }
-
-            // bail if there are still missing bodies
-            foreach (var thread in newChatty.Threads)
-                foreach (var post in thread.Posts)
-                    if (post.Body == null)
-                        throw new ParsingException($"Missing body for post {post.Id}.");
-
             void SetBody(ChattyPost postBody)
             {
                 if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
@@ -338,6 +314,34 @@ namespace SimpleChattyServer.Services
                     newChattyPost.Date = postBody.Date;
                 }
             }
+        }
+
+        private void RemovePostsWithNoBody(Chatty chatty)
+        {
+            var anyChanges = false;
+            foreach (var thread in chatty.Threads)
+            {
+                for (var postIndex = 0; postIndex < thread.Posts.Count; postIndex++)
+                {
+                    var subthreadRootPost = thread.Posts[postIndex];
+                    if (subthreadRootPost.Body == null)
+                    {
+                        // remove the subthread rooted at this post
+                        anyChanges = true;
+                        do
+                        {
+                            _logger.LogDebug($"Removing post with no body: {thread.Posts[postIndex].Id}");
+                            thread.Posts.RemoveAt(postIndex);
+                        }
+                        while (postIndex < thread.Posts.Count &&
+                            thread.Posts[postIndex].Depth > subthreadRootPost.Depth);
+
+                        postIndex--;
+                    }
+                }
+            }
+            if (anyChanges)
+                chatty.SetDictionaries();
         }
     }
 }
