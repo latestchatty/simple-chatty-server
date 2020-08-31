@@ -83,10 +83,10 @@ namespace SimpleChattyServer.Services
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
-                reply.Author = WebUtility.HtmlDecode(p.Clip(
+                reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
-                reply.Body = MakeSpoilersClickable(CollapseWhitespace(WebUtility.HtmlDecode(p.Clip(
+                reply.Body = MakeSpoilersClickable(CollapseWhitespace(HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
                     "</div>")))).Trim();
                 reply.Date = DateParser.Parse(StripTags(p.Clip(
@@ -123,7 +123,7 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
-            var rootBody = MakeSpoilersClickable(WebUtility.HtmlDecode(p.Clip(
+            var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
                 "</div>"))).Trim();
             var rootDate = DateParser.Parse(StripTags(p.Clip(
@@ -155,7 +155,7 @@ namespace SimpleChattyServer.Services
                 reply.Id = int.Parse(p.Clip(
                     new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" },
                     "\""));
-                reply.Author = WebUtility.HtmlDecode(p.Clip(
+                reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"oneline_user", ">" },
                     "</span>"));
 
@@ -234,11 +234,13 @@ namespace SimpleChattyServer.Services
         }
 
         public static string PreviewFromBody(string body) =>
-            CollapseWhitespace(StripTags(
-                RemoveSpoilers(body)
-                .Replace("<br />", " ")
-                .Replace("<br/>", " ")
-                .Replace("<br>", " ")));
+            HtmlDecodeExceptLtGt(
+                CollapseWhitespace(
+                    StripTags(
+                        RemoveSpoilers(body)
+                        .Replace("<br />", " ")
+                        .Replace("<br/>", " ")
+                        .Replace("<br>", " "))));
 
         private static string RemoveSpoilers(string text)
         {
@@ -332,5 +334,11 @@ namespace SimpleChattyServer.Services
 
             return str.Trim();
         }
+
+        private static string HtmlDecodeExceptLtGt(string str) =>
+            WebUtility.HtmlDecode(
+                str
+                .Replace("&lt;", "&amp;lt;")
+                .Replace("&gt;", "&amp;gt;"));
     }
 }
