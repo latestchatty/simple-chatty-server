@@ -452,6 +452,8 @@ Events allow the server to inform the client of any changes that are made, which
 - `"newPost"` – A new post has been added.
 - `"categoryChange"` – The category of an existing post has been modified.
 - `"lolCountsUpdate"` - LOL counts changed.
+- `"readStatusUpdate"` - a user has updated a thread's most recently read post ID.
+- `"postChange"` - a user has been deleted causing a post's author and body to change.
 
 The category change event encompasses the following three things that may happen to a post after it is initially made:
 - The post may be nuked (removed from the chatty).
