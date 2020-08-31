@@ -55,7 +55,7 @@ namespace SimpleChattyServer.Controllers
                     /* {7} */ results.Results.Count < perPage ? "disabled" : "",
                     /* {8} */ $"{(int)Math.Ceiling((double)results.TotalResults / perPage)}",
                     /* {9} */ $"{results.TotalResults:#,##0}",
-                    /* {10} */ $"{page}"));
+                    /* {10} */ $"{page:#,##0}"));
                 if (results.Results.Count == 0)
                 {
                     sb.Append(NO_SEARCH_RESULTS);
@@ -83,25 +83,26 @@ namespace SimpleChattyServer.Controllers
         <meta charset=""utf-8""> 
         <title>WinChatty Search</title>
         <style>
-            *                 {{ font-family: sans-serif; }}
-            body              {{ overflow-y: scroll; margin: 0; font-size: 16px; min-width: 900px; }}
-            a.link            {{ text-decoration: none; color: #051047; }}
-            a:hover           {{ text-decoration: underline; }}
-            .text             {{ border: 1px solid #C6C6C6; padding: 2px; font-size: 16px; }}
-            .button           {{ height: 28px; width: 75px; font-size: 16px; }}
-            #formTable        {{ margin: 0 auto; border-spacing: 0; padding: 0; }}
-            #formHeader td    {{ font-size: 12px; color: gray; padding: 0px; padding-left: 4px; }}
-            #category         {{ border: 1px solid #C6C6C6; padding: 1px; font-size: 16px; }}
-            #formContainer    {{ background: #EEEEEE; border-bottom: 1px solid gray; padding: 5px; height: 46px; }}
-            .body             {{ padding-right: 5px; padding-bottom: 5px; font-size: 14px; width: 495px; max-width: 495px; overflow: hidden; 
-                                text-overflow: ellipsis; white-space: nowrap; }}
-            .author           {{ padding-right: 5px; padding-bottom: 5px; font-size: 14px; width: 100px; max-width: 100px; overflow: hidden; 
-                                text-overflow: ellipsis; white-space: nowrap; }}
-            .date             {{ padding-bottom: 5px; font-size: 14px; width: 150px; max-width: 100px; overflow: hidden; 
-                                text-overflow: ellipsis; white-space: nowrap; }}
-            .resultLink       {{ color: black; text-decoration: none; }}
-            #results          {{ margin: 0 30px; max-width: 1200px; }} 
-            #results > table  {{ width: 100%; }}
+            * {{ font-family: sans-serif; }}
+            body {{ overflow-y: scroll; margin: 0; font-size: 16px; min-width: 900px; }}
+            a.link {{ text-decoration: none; color: #051047; }}
+            a:hover {{ text-decoration: underline; }}
+            .text {{ border: 1px solid #C6C6C6; padding: 2px; font-size: 16px; }}
+            .button {{ height: 28px; width: 75px; font-size: 16px; }}
+            input[type=text], select {{ margin-right: 5px; }}
+            #formTable {{ margin: 0 auto; border-spacing: 0; padding: 0; }}
+            #formHeader td {{ font-size: 12px; color: gray; padding: 0px; padding-left: 4px; }}
+            #category {{ border: 1px solid #C6C6C6; padding: 1px; font-size: 16px; }}
+            #formContainer {{ background: #EEEEEE; border-bottom: 1px solid gray; padding: 5px; height: 46px; }}
+            .body {{ padding-right: 5px; padding-bottom: 5px; font-size: 14px; width: 495px; max-width: 495px;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+            .author {{ padding-right: 5px; padding-bottom: 5px; font-size: 14px; width: 100px; max-width: 100px;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+            .date {{ padding-bottom: 5px; font-size: 14px; width: 150px; max-width: 100px; overflow: hidden;
+                text-overflow: ellipsis; white-space: nowrap; }}
+            .resultLink {{ color: black; text-decoration: none; }}
+            #results {{ margin: 0 30px; max-width: 1200px; }} 
+            #results > table {{ width: 100%; }}
         </style>
     </head>
     <body>
@@ -138,14 +139,14 @@ namespace SimpleChattyServer.Controllers
         <div style=""font-size: 16px; padding: 10px; float: left;"">
         Found {9} total results.
         </div>
-        <div style=""text-align: right; float: right;"">
+        <div style=""text-align: right; float: right; padding-right: 10px;"">
             <form method=""get"" action=""search"" style=""display: inline;"">
                 <input type=""hidden"" name=""terms"" value=""{0}"">
                 <input type=""hidden"" name=""author"" value=""{1}"">
                 <input type=""hidden"" name=""parentAuthor"" value=""{2}"">
                 <input type=""hidden"" name=""category"" value=""{3}"">
                 <input type=""hidden"" name=""page"" value=""1"">
-                <input class=""button"" type=""submit"" value=""|&laquo;"" {4}>
+                <input class=""button"" type=""submit"" value=""⏮️"" {4}>
             </form>
             <form method=""get"" action=""search"" style=""display: inline;"">
                 <input type=""hidden"" name=""terms"" value=""{0}"">
@@ -153,7 +154,7 @@ namespace SimpleChattyServer.Controllers
                 <input type=""hidden"" name=""parentAuthor"" value=""{2}"">
                 <input type=""hidden"" name=""category"" value=""{3}"">
                 <input type=""hidden"" name=""page"" value=""{5}"">
-                <input class=""button"" type=""submit"" value=""&laquo; Back"" {4}>
+                <input class=""button"" type=""submit"" value=""◀️"" {4}>
             </form>
             <span style=""font-size: 16px; padding: 10px;"">Page {10}</span>
             <form method=""get"" action=""search"" style=""display: inline;"">
@@ -162,7 +163,7 @@ namespace SimpleChattyServer.Controllers
                 <input type=""hidden"" name=""parentAuthor"" value=""{2}"">
                 <input type=""hidden"" name=""category"" value=""{3}"">
                 <input type=""hidden"" name=""page"" value=""{6}"">
-                <input class=""button"" type=""submit"" value=""Next &raquo;"" {7}>
+                <input class=""button"" type=""submit"" value=""▶️"" {7}>
             </form>
             <form method=""get"" action=""search"" style=""display: inline;"">
                 <input type=""hidden"" name=""terms"" value=""{0}"">
@@ -170,7 +171,7 @@ namespace SimpleChattyServer.Controllers
                 <input type=""hidden"" name=""parentAuthor"" value=""{2}"">
                 <input type=""hidden"" name=""category"" value=""{3}"">
                 <input type=""hidden"" name=""page"" value=""{8}"">
-                <input class=""button"" type=""submit"" value=""&raquo;|"" {7}>
+                <input class=""button"" type=""submit"" value=""⏭️"" {7}>
             </form>
         </div>   
         <div id=""results"">

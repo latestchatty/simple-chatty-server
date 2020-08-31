@@ -41,9 +41,12 @@ namespace SimpleChattyServer.Services
                     CurrentPage = page
                 };
 
-            searchResultPage.TotalResults = int.Parse(p.Clip(
-                new[] { "<h2 class=\"search-num-found\"", ">" },
-                " ").Replace(",", ""));
+            if (p.Peek(1, "<h2 class=\"search-num-found\"") != -1)
+            {
+                searchResultPage.TotalResults = int.Parse(p.Clip(
+                    new[] { "<h2 class=\"search-num-found\"", ">" },
+                    " ").Replace(",", ""));
+            }
 
             while (p.Peek(1, "<li class=\"result") != -1 &&
                 p.Peek(1, "<span class=\"chatty-author\">") != -1)
