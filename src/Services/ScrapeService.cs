@@ -139,6 +139,8 @@ namespace SimpleChattyServer.Services
 
             try
             {
+                var oldEventId = await _eventProvider.GetLastEventId();
+
                 stopwatch.Step(nameof(GetChattyWithoutBodies));
                 var lolTask = _lolParser.DownloadChattyLolCounts(_state?.LolJson, _state?.LolCounts);
                 var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages);
@@ -178,8 +180,12 @@ namespace SimpleChattyServer.Services
                         LolCounts = lolCounts
                     };
 
-                stopwatch.Step(nameof(SaveState));
-                await SaveState();
+                var newEventId = await _eventProvider.GetLastEventId();
+                if (oldEventId != newEventId)
+                {
+                    stopwatch.Step(nameof(SaveState));
+                    await SaveState();
+                }
 
                 _logger.LogInformation($"Scrape complete. Last event is #{await _eventProvider.GetLastEventId()}. {stopwatch}");
             }
