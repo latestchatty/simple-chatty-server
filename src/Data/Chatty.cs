@@ -9,6 +9,8 @@ namespace SimpleChattyServer.Data
         [JsonIgnore] public Dictionary<int, ChattyThread> ThreadsByRootId { get; set; }
         [JsonIgnore] public Dictionary<int, ChattyThread> ThreadsByReplyId { get; set; }
         [JsonIgnore] public Dictionary<int, ChattyPost> PostsById { get; set; }
+        [JsonIgnore] public HashSet<int> ExpiredThreadIds { get; set; } = new HashSet<int>();
+        [JsonIgnore] public HashSet<int> NukedThreadIds { get; set; } = new HashSet<int>();
 
         public void SetDictionaries()
         {

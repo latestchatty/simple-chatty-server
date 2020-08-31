@@ -240,6 +240,19 @@ namespace SimpleChattyServer.Services
             return (contentTypeId, contentId);
         }
 
+        public async Task<bool> DoesThreadExist(int threadId)
+        {
+            try
+            {
+                await GetThreadTree(threadId);
+                return true;
+            }
+            catch (MissingThreadException)
+            {
+                return false;
+            }
+        }
+
         public static string PreviewFromBody(string body) =>
             CollapseWhitespace(StripTags(
                 RemoveSpoilers(body)

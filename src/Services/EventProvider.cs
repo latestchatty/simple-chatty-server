@@ -64,15 +64,17 @@ namespace SimpleChattyServer.Services
         public async Task Update(Chatty newChatty, ChattyLolCounts newChattyLolCounts)
         {
             var oldChatty = await _lock.WithReadLock(nameof(Update), func: () => _chatty);
-            var nukedThreadIds = new HashSet<int>();
+
             if (oldChatty != null)
             {
+                // safety first, this should never throw if the scraper has done its job correctly
                 foreach (var oldThread in oldChatty.Threads)
                 {
                     if (!newChatty.ThreadsByRootId.ContainsKey(oldThread.ThreadId) &&
-                        !await DoesThreadExist(oldThread.ThreadId))
+                        !newChatty.NukedThreadIds.Contains(oldThread.ThreadId) &&
+                        !newChatty.ExpiredThreadIds.Contains(oldThread.ThreadId))
                     {
-                        nukedThreadIds.Add(oldThread.ThreadId);
+                        throw new Exception($"Thread ID {oldThread.ThreadId} disappeared but is not listed as expired or nuked!");
                     }
                 }
             }
@@ -96,7 +98,7 @@ namespace SimpleChattyServer.Services
                         select thread.ThreadId)
                     {
                         // was this thread nuked or did it expire?
-                        if (nukedThreadIds.Contains(oldThreadId))
+                        if (newChatty.NukedThreadIds.Contains(oldThreadId))
                         {
                             // nuked thread
                             newEvents.Add(
@@ -311,19 +313,6 @@ namespace SimpleChattyServer.Services
         {
             var threadLolCounts = lolCounts.GetThreadLolCounts(thread.ThreadId);
             return PostModel.CreateList(thread, threadLolCounts).ToDictionary(x => x.Id);
-        }
-
-        private async Task<bool> DoesThreadExist(int threadId)
-        {
-            try
-            {
-                var missingThread = await _threadParser.GetThread(threadId);
-                return true;
-            }
-            catch (MissingThreadException)
-            {
-                return false;
-            }
         }
     }
 }

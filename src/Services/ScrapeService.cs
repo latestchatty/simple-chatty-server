@@ -135,28 +135,36 @@ namespace SimpleChattyServer.Services
 
         private async Task<TimeSpan> Scrape()
         {
-            var stopwatch = Stopwatch.StartNew();
+            var stopwatch = new StepStopwatch();
 
             try
             {
-                var lolTask = _lolParser.DownloadChattyLolCounts(
-                    _state?.LolJson, _state?.LolCounts);
-
+                stopwatch.Step(nameof(GetChattyWithoutBodies));
+                var lolTask = _lolParser.DownloadChattyLolCounts(_state?.LolJson, _state?.LolCounts);
                 var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages);
 
+                if (_state != null)
+                {
+                    stopwatch.Step(nameof(HandleThreadsThatDisappeared));
+                    await HandleThreadsThatDisappeared(_state.Chatty, newChatty);
+                }
+
+                stopwatch.Step(nameof(ReorderThreads));
+                ReorderThreads(newChatty);
+
+                stopwatch.Step(nameof(newChatty.SetDictionaries));
+                newChatty.SetDictionaries();
+
+                stopwatch.Step(nameof(CopyPostBodies));
                 CopyPostBodies(newChatty);
 
-                var threadIdsWithMissingPostBodies = new List<int>();
-                foreach (var thread in newChatty.Threads)
-                    if (thread.Posts.Any(x => x.Body == null))
-                        threadIdsWithMissingPostBodies.Add(thread.ThreadId);
+                stopwatch.Step(nameof(DownloadPostBodies));
+                await DownloadPostBodies(newChatty);
 
-                await DownloadPostBodies(newChatty, threadIdsWithMissingPostBodies);
-
+                stopwatch.Step(nameof(_chattyProvider.Update));
                 var (lolJson, lolCounts) = await lolTask;
-
-                _chattyProvider.Update(newChatty, lolCounts);
                 await _eventProvider.Update(newChatty, lolCounts);
+                _chattyProvider.Update(newChatty, lolCounts);
 
                 _state =
                     new ScrapeState
@@ -167,13 +175,14 @@ namespace SimpleChattyServer.Services
                         LolCounts = lolCounts
                     };
 
+                stopwatch.Step(nameof(SaveState));
                 await SaveState();
 
-                _logger.LogInformation($"Scrape complete in {stopwatch.Elapsed}. Last event is #{await _eventProvider.GetLastEventId()}.");
+                _logger.LogInformation($"Scrape complete. Last event is #{await _eventProvider.GetLastEventId()}. {stopwatch}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Scrape failed in {stopwatch.Elapsed}. {ex.Message}");
+                _logger.LogError(ex, $"Scrape failed. {stopwatch}. {ex.Message}");
             }
 
             return stopwatch.Elapsed;
@@ -221,26 +230,44 @@ namespace SimpleChattyServer.Services
                     }
                 }
 
-                // the other race condition is that a thread can be missed because it moved from page 2 to 1 in
-                // between our requests of pages 1 and 2. let's add the old thread here, and if it turns out that we
-                // see it on page 2, then we'll overwrite this old version
-                if (previousPage != null)
-                {
-                    foreach (var previousThread in previousPage.ChattyPage.Threads)
-                    {
-                        if (!seenThreadIds.Contains(previousThread.ThreadId))
-                        {
-                            chatty.Threads.Add(previousThread);
-                            seenThreadIds.Add(previousThread.ThreadId);
-                        }
-                    }
-                }
-
                 currentPage++;
             }
 
-            chatty.SetDictionaries();
             return (newPages, chatty);
+        }
+
+        private async Task HandleThreadsThatDisappeared(Chatty oldChatty, Chatty newChatty)
+        {
+            var newChattyThreadIds = newChatty.Threads.Select(x => x.ThreadId).ToHashSet();
+            foreach (var oldThread in oldChatty.Threads)
+            {
+                var threadId = oldThread.ThreadId;
+                if (!newChattyThreadIds.Contains(threadId))
+                {
+                    if (await _threadParser.DoesThreadExist(threadId))
+                    {
+                        if (DateTimeOffset.Now - oldThread.Posts[0].Date > TimeSpan.FromHours(18))
+                            newChatty.ExpiredThreadIds.Add(threadId);
+                        else
+                            newChatty.Threads.Add(oldThread);
+                    }
+                    else
+                    {
+                        newChatty.NukedThreadIds.Add(threadId);
+                    }
+                }
+            }
+        }
+
+        private void ReorderThreads(Chatty newChatty)
+        {
+            var lastPostIds = new Dictionary<int, int>(); // thread id => last post id
+            foreach (var thread in newChatty.Threads)
+                lastPostIds.Add(thread.ThreadId, thread.Posts.Max(x => x.Id));
+            newChatty.Threads =
+                newChatty.Threads
+                .OrderByDescending(x => lastPostIds[x.ThreadId])
+                .ToList();
         }
 
         private void CopyPostBodies(Chatty newChatty)
@@ -263,8 +290,13 @@ namespace SimpleChattyServer.Services
             }
         }
 
-        private async Task DownloadPostBodies(Chatty newChatty, List<int> threadIdsWithMissingPostBodies)
+        private async Task DownloadPostBodies(Chatty newChatty)
         {
+            var threadIdsWithMissingPostBodies = new List<int>();
+            foreach (var thread in newChatty.Threads)
+                if (thread.Posts.Any(x => x.Body == null))
+                    threadIdsWithMissingPostBodies.Add(thread.ThreadId);
+
             await ParallelAsync.ForEach(threadIdsWithMissingPostBodies, 4, async threadId =>
             {
                 foreach (var postBody in await _threadParser.GetThreadBodies(threadId))
