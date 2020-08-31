@@ -25,5 +25,15 @@ aws s3 cp s3://simple-chatty-server/SimpleChattyServer.gz /opt/simple-chatty-ser
 gunzip /opt/simple-chatty-server/SimpleChattyServer.gz && \
 chmod +x /opt/simple-chatty-server/SimpleChattyServer && \
 systemctl start simple-chatty-server.service && \
+journalctl -f | grep Scrape
+```
+
+If that blows up, roll back to the previous version:
+
+```
+cd /opt/simple-chatty-server && \
+systemctl stop simple-chatty-server.service && \
+mv SimpleChattyServer.bak SimpleChattyServer && \
+systemctl start simple-chatty-server.service && \
 journalctl -f | less
 ```
