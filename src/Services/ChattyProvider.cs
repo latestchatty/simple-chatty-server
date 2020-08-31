@@ -111,7 +111,7 @@ namespace SimpleChattyServer.Services
             query.Add("content_id", $"{contentId}");
             query.Add("page", "");
             query.Add("parent_url", "/chatty");
-            query.Add("body", _emojiConverter.ConvertEmojisToEntities(body));
+            query.Add("body", _emojiConverter.ConvertEmojisToEntities(body.Replace("&", "&amp;")));
             
             var lastEventId = await _eventProvider.GetLastEventId();
             var response = await _downloadService.DownloadWithUserLogin(
