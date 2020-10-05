@@ -86,9 +86,9 @@ namespace SimpleChattyServer.Services
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
-                reply.Body = MakeSpoilersClickable(CollapseWhitespace(HtmlDecodeExceptLtGt(p.Clip(
+                reply.Body = MakeSpoilersClickable(HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
-                    "</div>")))).Trim();
+                    "</div>"))).Trim();
                 reply.Date = DateParser.Parse(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
                     "T</div")) + "T");
