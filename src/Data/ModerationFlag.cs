@@ -8,6 +8,7 @@ namespace SimpleChattyServer.Data
         Political,
         Tangent,
         Informative,
-        Nuked
+        Nuked,
+        Cortex
     }
 }
