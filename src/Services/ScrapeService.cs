@@ -166,6 +166,9 @@ namespace SimpleChattyServer.Services
                 stopwatch.Step(nameof(RemovePostsWithNoBody));
                 RemovePostsWithNoBody(newChatty);
 
+                stopwatch.Step(nameof(FixCortexLinks));
+                FixCortexLinks(newChatty);
+
                 stopwatch.Step(nameof(_chattyProvider.Update));
                 var (lolJson, lolCounts) = await lolTask;
                 await _eventProvider.Update(newChatty, lolCounts);
@@ -348,6 +351,12 @@ namespace SimpleChattyServer.Services
             }
             if (anyChanges)
                 chatty.SetDictionaries();
+        }
+
+        private void FixCortexLinks(Chatty newChatty)
+        {
+            foreach (var x in newChatty.PostsById.Values)
+                x.Body = x.Body.Replace("<a href=\"/cortex/", "<a href=\"https://www.shacknews.com/cortex/");
         }
     }
 }
