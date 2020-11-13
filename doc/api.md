@@ -97,8 +97,8 @@ Type | Description
 `[BIT]` | `true` or `false`
 `[STR]` | String
 `[DAT]` | Combined date and time, represented as a strict subset of RFC 3339, which is itself a strict subset of ISO 8601.  Dates in JSON responses will always be formatted exactly like this: `"2013-12-01T19:39:00Z"`.  The time is in the UTC time zone.  Make sure to convert all `[DAT]` values to the user's local time zone before displaying!
-`[MOD]` | Moderation flag enum.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"` `"cortex"`
-`[MODN]` | Moderation flag enum, including "nuked".  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"` `"cortex"` `"nuked"`
+`[MOD]` | Moderation flag enum.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"`
+`[MODN]` | Moderation flag enum, including "nuked".  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"tangent"` `"informative"` `"nuked"`
 `[MBX]` | Mailbox enum.  One of the following strings: `"inbox"` `"sent"`
 `[MPT]` | Marked post type enum.  One of the following strings: `"unmarked"` `"pinned"` `"collapsed"`
 
@@ -927,7 +927,7 @@ The v1 comment data structure is hierarchical.  Each comment has a list of its c
 Type | Description
 --- | ---
 `[V1_DAT]` | Date and time in freeform text like "Aug 02, 2015 8:01pm PDT".  Note the Pacific time zone, rather than UTC.
-`[V1_MOD]` | Moderation flag enum.  Same as `[MOD]` except it uses `"offtopic"` instead of `"tangent"`, and does not have `"cortex"`.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"offtopic"` `"informative"`
+`[V1_MOD]` | Moderation flag enum.  Same as `[MOD]` except it uses `"offtopic"` instead of `"tangent"`.  One of the following strings: `"ontopic"` `"nws"` `"stupid"` `"political"` `"offtopic"` `"informative"`
 
 `[V1_ROOT_COMMENT]` - A root post.
 >```
