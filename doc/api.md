@@ -120,7 +120,8 @@ Type | Description
 >         "count": [INT]
 >      },
 >      ...
->   ]
+>   ],
+>   "isCortex": [BIT]
 >}
 >```
 

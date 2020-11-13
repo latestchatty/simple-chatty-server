@@ -237,7 +237,8 @@ namespace SimpleChattyServer.Controllers
                                 Category = ModerationFlag.OnTopic,
                                 Date = result.Date,
                                 Body = result.Preview,
-                                Lols = new List<LolModel>()
+                                Lols = new List<LolModel>(),
+                                IsCortex = false
                             });
                     }
                 }
