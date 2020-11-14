@@ -86,9 +86,9 @@ namespace SimpleChattyServer.Services
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
-                reply.Body = MakeSpoilersClickable(CollapseWhitespace(HtmlDecodeExceptLtGt(p.Clip(
+                reply.Body = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
-                    "</div>")))).Trim();
+                    "</div>"))));
                 reply.Date = DateParser.Parse(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
                     "T</div")) + "T");
@@ -123,9 +123,9 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
-            var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(p.Clip(
+            var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
-                "</div>"))).Trim();
+                "</div>"))));
             var rootDate = DateParser.Parse(StripTags(p.Clip(
                 new[] { "<div class=\"postdate\">", ">" },
                 "T</div")) + "T");
@@ -334,6 +334,9 @@ namespace SimpleChattyServer.Services
 
             return str.Trim();
         }
+
+        private static string RemoveNewlines(string str) =>
+            str.Replace("\r", "").Replace("\n", "");
 
         private static string HtmlDecodeExceptLtGt(string str) =>
             WebUtility.HtmlDecode(

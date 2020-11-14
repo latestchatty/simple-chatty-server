@@ -15,6 +15,7 @@ namespace SimpleChattyServer.Data
         [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
         public string Body { get; set; }
         public List<LolModel> Lols { get; set; }
+        public bool IsCortex { get; set; }
 
         public static List<PostModel> CreateList(ChattyThread thread, ThreadLolCounts lolCounts)
         {
@@ -38,7 +39,8 @@ namespace SimpleChattyServer.Data
                         Lols =
                             lolCounts.CountsByPostId.TryGetValue(post.Id, out var postLols)
                             ? postLols
-                            : new List<LolModel>()
+                            : new List<LolModel>(),
+                        IsCortex = post.IsCortex
                     });
             }
 

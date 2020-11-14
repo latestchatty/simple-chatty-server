@@ -23,6 +23,7 @@ namespace SimpleChattyServer.Data
                 case ModerationFlag.Tangent: return "offtopic";
                 case ModerationFlag.Informative: return "informative";
                 case ModerationFlag.Nuked: return "nuked";
+                case ModerationFlag.Cortex: return "ontopic";
                 default: throw new ArgumentOutOfRangeException(nameof(self));
             }
         }
@@ -38,6 +39,7 @@ namespace SimpleChattyServer.Data
                 case "offtopic": case "tangent": return ModerationFlag.Tangent;
                 case "informative": return ModerationFlag.Informative;
                 case "nuked": return ModerationFlag.Nuked;
+                case "cortex": return ModerationFlag.Cortex;
                 default: throw new ArgumentOutOfRangeException(str);
             }
         }

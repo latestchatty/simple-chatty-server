@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -31,6 +32,10 @@ namespace SimpleChattyServer.Services
         private ScrapeState _state;
         private Task _task;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
+        private static readonly Regex m_cortex_regex = new Regex(
+            @"Read more: <a href=""[^""]*/cortex/article/[^""]+"">[^h][^t][^t][^p]",
+            RegexOptions.Compiled);
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
             LolParser lolParser, DownloadService downloadService, ChattyProvider chattyProvider,
@@ -165,6 +170,12 @@ namespace SimpleChattyServer.Services
 
                 stopwatch.Step(nameof(RemovePostsWithNoBody));
                 RemovePostsWithNoBody(newChatty);
+
+                stopwatch.Step(nameof(DetectCortexThreads));
+                DetectCortexThreads(newChatty);
+
+                stopwatch.Step(nameof(FixRelativeLinks));
+                FixRelativeLinks(newChatty);
 
                 stopwatch.Step(nameof(_chattyProvider.Update));
                 var (lolJson, lolCounts) = await lolTask;
@@ -348,6 +359,25 @@ namespace SimpleChattyServer.Services
             }
             if (anyChanges)
                 chatty.SetDictionaries();
+        }
+
+        private void FixRelativeLinks(Chatty newChatty)
+        {
+            foreach (var x in newChatty.PostsById.Values)
+            {
+                x.Body = x.Body
+                    .Replace("<a href=\"/", "<a href=\"https://www.shacknews.com/")
+                    .Replace("<a target=\"_blank\" href=\"/", "<a target=\"_blank\" href=\"https://www.shacknews.com/");
+            }
+        }
+
+        private void DetectCortexThreads(Chatty newChatty)
+        {
+            foreach (var thread in newChatty.Threads)
+            {
+                var op = thread.Posts[0];
+                op.IsCortex = m_cortex_regex.IsMatch(op.Body);
+            }
         }
     }
 }

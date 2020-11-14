@@ -76,8 +76,17 @@ namespace SimpleChattyServer.Services
 
             while (p.Peek(1, "<div class=\"fullpost") != -1)
             {
-                var thread = _threadParser.ParseThreadTree(p);
-                chattyPage.Threads.Add(thread);
+                try
+                {
+                    var thread = _threadParser.ParseThreadTree(p);
+                    chattyPage.Threads.Add(thread);
+                }
+                catch (MissingThreadException)
+                {
+                    // this can be ok, it's possible for a page to only exist because it contains entirely nuked
+                    // threads that we can't see
+                    break;
+                }
 
                 if (chattyPage.Threads.Count > 40)
                     throw new ParsingException("Too many threads. Something is wrong.");
