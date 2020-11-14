@@ -32,12 +32,12 @@ namespace SimpleChattyServer
                 throw new Exception("Must configure DataPath.");
             if (Environment.IsProduction())
                 services.AddLettuceEncrypt().PersistDataToDirectory(
-                     new DirectoryInfo(dataPath), null);
+                    new DirectoryInfo(dataPath), null);
             services.AddResponseCompression(
-                 options => options.EnableForHttps = true);
+                options => options.EnableForHttps = true);
             services.AddCors(
-                 cors => cors.AddDefaultPolicy(
-                      builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+                cors => cors.AddDefaultPolicy(
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
             services.Configure<DukeNukedOptions>(Configuration.GetSection(DukeNukedOptions.SectionName));
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
             services.Configure<StorageOptions>(storageSection);
@@ -55,14 +55,10 @@ namespace SimpleChattyServer
             services.AddHostedService<DukeNukedService>();
             services.AddHostedService<ScrapeService>();
             services.AddControllers(
-                 options => options.Filters.Add(new HttpResponseExceptionFilter()));
+                options => options.Filters.Add(new HttpResponseExceptionFilter()));
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(x =>
             {
-                //Because there are classes named the same in different namespaces, they'll clash on generation
-                // I renamed them to not clash now, but if you want to simplify so they clash again, uncomment
-                // the following line and the data types will be generated with the full namespace.
-                //x.CustomSchemaIds(s => s.FullName); 
                 x.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
@@ -90,6 +86,7 @@ namespace SimpleChattyServer
             {
                 app.UseDeveloperExceptionPage();
             }
+
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
 
@@ -97,18 +94,19 @@ namespace SimpleChattyServer
             // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Winchatty API");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WinChatty API");
             });
+            
             app.UseResponseCompression();
             app.UseMiddleware<RequestLogMiddleware>();
             app.UseCors();
             app.UseRouting();
             app.UseEndpoints(
-                 endpoints =>
-                 {
-                     endpoints.MapControllers();
-                     endpoints.MapDefaultControllerRoute();
-                 });
+                endpoints =>
+                {
+                    endpoints.MapControllers();
+                    endpoints.MapDefaultControllerRoute();
+                });
         }
     }
 }
