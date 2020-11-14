@@ -59,7 +59,7 @@ namespace SimpleChattyServer.Controllers
                 Threads = (
                     from thread in chatty.Threads
                     let threadLolCounts = lolCounts.GetThreadLolCounts(thread.ThreadId)
-                    select new GetChattyResponse.Thread
+                    select new GetChattyResponse.GetChattyResponseThread
                     {
                         ThreadId = thread.ThreadId,
                         Posts = PostModel.CreateList(thread, threadLolCounts)
@@ -97,14 +97,14 @@ namespace SimpleChattyServer.Controllers
         public async Task<GetChattyResponse> GetThread(string id)
         {
             var idList = ParseIntList(id, nameof(id), min: 1, max: 50);
-            var list = new List<GetChattyResponse.Thread>(idList.Count);
+            var list = new List<GetChattyResponse.GetChattyResponseThread>(idList.Count);
             foreach (var postId in idList)
             {
                 try
                 {
                     var (thread, lols) = await _chattyProvider.GetThreadAndLols(postId);
                     list.Add(
-                        new GetChattyResponse.Thread
+                        new GetChattyResponse.GetChattyResponseThread
                         {
                             ThreadId = thread.ThreadId,
                             Posts = PostModel.CreateList(thread, lols)
@@ -122,14 +122,14 @@ namespace SimpleChattyServer.Controllers
         public async Task<GetThreadPostCountResponse> GetThreadPostCount(string id)
         {
             var idList = ParseIntList(id, nameof(id), min: 1, max: 200);
-            var list = new List<GetThreadPostCountResponse.Thread>(idList.Count);
+            var list = new List<GetThreadPostCountResponse.GetThreadPostCountResponseThread>(idList.Count);
             foreach (var postId in idList)
             {
                 try
                 {
                     var thread = await _chattyProvider.GetThreadTree(postId);
                     list.Add(
-                        new GetThreadPostCountResponse.Thread
+                        new GetThreadPostCountResponse.GetThreadPostCountResponseThread
                         {
                             ThreadId = thread.ThreadId,
                             PostCount = thread.Posts.Count
@@ -506,7 +506,7 @@ namespace SimpleChattyServer.Controllers
                     from pair in userData.LastReadPostByThreadId
                     let threadId = int.Parse(pair.Key)
                     where chatty.ThreadsByRootId.ContainsKey(threadId)
-                    select new GetReadStatusResponse.Thread
+                    select new GetReadStatusResponse.GetReadStatusResponseThread
                     {
                         ThreadId = threadId,
                         LastReadPostId = pair.Value

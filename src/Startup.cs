@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using SimpleChattyServer.Data.Options;
 using SimpleChattyServer.Services;
 
@@ -55,11 +56,47 @@ namespace SimpleChattyServer
             services.AddHostedService<ScrapeService>();
             services.AddControllers(
                 options => options.Filters.Add(new HttpResponseExceptionFilter()));
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(x =>
+            {
+                x.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "WinChatty API",
+                    Description = "This API implements a subset of versions 1 and 2 of the WinChatty API, allowing it to support preexisting clients of that API.",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "electroly",
+                        Email = string.Empty,
+                        Url = new Uri("https://github.com/electroly"),
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "MIT",
+                        Url = new Uri("https://github.com/latestchatty/simple-chatty-server/blob/master/LICENSE"),
+                    }
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WinChatty API");
+            });
+            
             app.UseResponseCompression();
             app.UseMiddleware<RequestLogMiddleware>();
             app.UseCors();

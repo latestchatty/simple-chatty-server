@@ -1,3 +1,4 @@
 #!/bin/bash
 set -euxo pipefail
-ASPNETCORE_ENVIRONMENT=Development dotnet run --project ../src/SimpleChattyServer.csproj -c Debug
+cd ../src/
+ASPNETCORE_ENVIRONMENT=Development dotnet watch run -c Debug
