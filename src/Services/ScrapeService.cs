@@ -34,7 +34,7 @@ namespace SimpleChattyServer.Services
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
         private static readonly Regex m_cortex_regex = new Regex(
-            @"Read more: <a href=""[^""]*/cortex/article/[^""]+"">[^h][^t][^t][^p]",
+            @"Read more: <a href=""[^""]*/cortex/article/[^""]+""[^>]*>[^h][^t][^t][^p]",
             RegexOptions.Compiled);
 
         public ScrapeService(ILogger<ScrapeService> logger, ChattyParser chattyParser, ThreadParser threadParser,
