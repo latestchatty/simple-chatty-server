@@ -14,7 +14,7 @@ namespace SimpleChattyServer.Data
             public int Id { get; set; }
             [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
             public string Author { get; set; }
-            [JsonConverter(typeof(V2ModerationFlagConverter))] public ModerationFlag Category { get; set; }
+            [JsonConverter(typeof(CortexModerationFlagConverter))] public ModerationFlag Category { get; set; }
             public string Body { get; set; }
             public int PostCount { get; set; }
             public bool IsParticipant { get; set; }
