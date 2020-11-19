@@ -4,7 +4,7 @@ data "aws_ami" "latest_ubuntu" {
 
   filter {
       name   = "name"
-      values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
+      values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-arm64-server-*"]
   }
 
   filter {
@@ -15,7 +15,7 @@ data "aws_ami" "latest_ubuntu" {
 
 resource "aws_instance" "simple_chatty_server" {
   ami = data.aws_ami.latest_ubuntu.id
-  instance_type = "t3a.small"
+  instance_type = "t4g.small"
   disable_api_termination = false
   instance_initiated_shutdown_behavior = "stop"
   monitoring = false
@@ -32,7 +32,7 @@ resource "aws_instance" "simple_chatty_server" {
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = 10
+    volume_size = 8
     delete_on_termination = true
   }
 
