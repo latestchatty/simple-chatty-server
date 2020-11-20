@@ -20,7 +20,7 @@ namespace SimpleChattyServer
                 {
                     builder.ClearProviders();
                     builder.AddConsole(
-                        options => options.Format = ConsoleLoggerFormat.Systemd);
+                        options => options.FormatterName = ConsoleFormatterNames.Systemd);
                 })
                 .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
     }
