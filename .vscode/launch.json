@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/bin/Debug/netcoreapp3.1/linux-x64/SimpleChattyServer.dll",
+            "program": "${workspaceFolder}/src/bin/Debug/netcoreapp5.0/linux-x64/SimpleChattyServer.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src",
             "stopAtEntry": false,

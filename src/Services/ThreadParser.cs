@@ -36,7 +36,7 @@ namespace SimpleChattyServer.Services
             }
 
             var contentTypeId = int.Parse(contentTypeIdStr.ToString());
-            if (contentTypeId != 2 && contentTypeId != 17)
+            if (contentTypeId != 2 && contentTypeId != 17 && contentTypeId != 18)
                 throw new MissingThreadException($"This post is not in the main chatty. Content type ID: {contentTypeId}");
         }
 

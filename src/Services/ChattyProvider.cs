@@ -64,6 +64,8 @@ namespace SimpleChattyServer.Services
                 threadLolCounts = await _lolParser.DownloadThreadLolCounts(thread);
             }
 
+            Cortex.DetectCortexThread(thread);
+
             return (thread, threadLolCounts);
         }
 
@@ -73,7 +75,7 @@ namespace SimpleChattyServer.Services
             if (chatty != null && chatty.ThreadsByReplyId.TryGetValue(postId, out var thread))
                 return thread;
             else
-                return await _threadParser.GetThread(postId);
+                return Cortex.DetectCortexThread(await _threadParser.GetThread(postId));
         }
 
         public async Task<ChattyThread> GetThreadTree(int postId)
@@ -82,7 +84,7 @@ namespace SimpleChattyServer.Services
             if (chatty != null && chatty.ThreadsByReplyId.TryGetValue(postId, out var thread))
                 return thread;
             else
-                return await _threadParser.GetThreadTree(postId);
+                return Cortex.DetectCortexThread(await _threadParser.GetThreadTree(postId));
         }
 
         public async Task Post(string username, string password, int parentId, string body)
