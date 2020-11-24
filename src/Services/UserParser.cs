@@ -13,7 +13,7 @@ namespace SimpleChattyServer.Services
         private readonly SearchParser _searchParser;
         private readonly ThreadParser _threadParser;
         private readonly ILogger<UserParser> _logger;
-        private readonly Dictionary<string, int> userNameToIdMapCache = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> _userNameToIdMapCache = new Dictionary<string, int>();
         private readonly LoggedReaderWriterLock _userIdCacheLock;
 
         private DateTime _cacheExpire = DateTime.UtcNow.AddHours(CACHE_TTL_HOURS);
@@ -34,13 +34,13 @@ namespace SimpleChattyServer.Services
                 if (_cacheExpire < DateTime.UtcNow)
                 {
                     _cacheExpire = DateTime.UtcNow.AddHours(CACHE_TTL_HOURS);
-                    userNameToIdMapCache.Clear();
+                    _userNameToIdMapCache.Clear();
                 }
             });
 
             var id = await _userIdCacheLock.WithReadLock(nameof(GetUserIdFromName) + userName, () =>
                 {
-                    if (userNameToIdMapCache.TryGetValue(userName, out var cachedId))
+                    if (_userNameToIdMapCache.TryGetValue(userName, out var cachedId))
                         return (int?)cachedId;
                     else
                         return default(int?);
@@ -58,7 +58,7 @@ namespace SimpleChattyServer.Services
                 {
                     await _userIdCacheLock.WithWriteLock(nameof(GetUserIdFromName) + userName, () =>
                         {
-                            userNameToIdMapCache[userName] = userPost.AuthorId;
+                            _userNameToIdMapCache[userName] = userPost.AuthorId;
                         });
 
                     return userPost.AuthorId;

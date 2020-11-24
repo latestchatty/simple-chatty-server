@@ -7,8 +7,8 @@ namespace SimpleChattyServer.Services
 {
     public class CortexParser
     {
-        private DownloadService _downloadService;
-        private UserParser _userParser;
+        private readonly DownloadService _downloadService;
+        private readonly UserParser _userParser;
 
         public CortexParser(DownloadService downloadService, UserParser userParser)
         {
