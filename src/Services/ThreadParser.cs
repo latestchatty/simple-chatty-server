@@ -56,6 +56,7 @@ namespace SimpleChattyServer.Services
                 {
                     treePost.Body = bodyPost.Body;
                     treePost.Date = bodyPost.Date;
+                    treePost.AuthorId = bodyPost.AuthorId;
                 }
             }
 
@@ -83,6 +84,7 @@ namespace SimpleChattyServer.Services
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
+                reply.AuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\""));
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();

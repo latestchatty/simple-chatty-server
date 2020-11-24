@@ -52,6 +52,8 @@ namespace SimpleChattyServer
             services.AddSingleton<SearchParser>();
             services.AddSingleton<ThreadParser>();
             services.AddSingleton<UserDataProvider>();
+            services.AddSingleton<UserParser>();
+            services.AddSingleton<CortexParser>();
             services.AddHostedService<DukeNukedService>();
             services.AddHostedService<ScrapeService>();
             services.AddControllers(

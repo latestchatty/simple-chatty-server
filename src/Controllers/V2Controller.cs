@@ -21,9 +21,12 @@ namespace SimpleChattyServer.Controllers
         private readonly ChattyParser _chattyParser;
         private readonly MessageParser _messageParser;
         private readonly UserDataProvider _userDataProvider;
+        private readonly UserParser _userParser;
+        private readonly CortexParser _cortexParser;
 
         public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
-            ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider)
+            ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider,
+            UserParser userParser, CortexParser cortexParser)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
@@ -31,6 +34,8 @@ namespace SimpleChattyServer.Controllers
             _chattyParser = chattyParser;
             _messageParser = messageParser;
             _userDataProvider = userDataProvider;
+            _userParser = userParser;
+            _cortexParser = cortexParser;
         }
 
         [HttpGet]
@@ -193,12 +198,12 @@ namespace SimpleChattyServer.Controllers
             author = author?.Trim() ?? "";
             parentAuthor = parentAuthor?.Trim() ?? "";
             category = category?.Trim() ?? "";
-            
+
             if (limit > 500)
                 throw new Api400Exception("The \"limit\" argument must be 500 or lower.");
             if (terms == "" && author == "" && parentAuthor == "")
                 throw new Api400Exception("A search term, author, or parent author query is required.");
-            
+
             var perPage = 15;
             var startingPage = offset / perPage;
             var startingPageFirstIndex = offset - (startingPage * perPage);
@@ -581,6 +586,18 @@ namespace SimpleChattyServer.Controllers
         public SuccessResponse NotificationsSetUserSetup()
         {
             return new SuccessResponse();
+        }
+
+        [HttpGet("getUserId")]
+        public async Task<GetUserIdResponse> GetUserId(string userName)
+        {
+            return new GetUserIdResponse(await _userParser.GetUserIdFromName(userName), userName);
+        }
+
+        [HttpGet("getCortexUser")]
+        public async Task<GetCortexUserResponse> GetCortexUser(string userName)
+        {
+            return new GetCortexUserResponse() { UserData = await _cortexParser.GetCortexUserData(userName) };
         }
 
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
