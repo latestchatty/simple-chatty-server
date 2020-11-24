@@ -21,9 +21,10 @@ namespace SimpleChattyServer.Controllers
         private readonly ChattyParser _chattyParser;
         private readonly MessageParser _messageParser;
         private readonly UserDataProvider _userDataProvider;
+		private readonly UserParser _userParser;
 
-        public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
-            ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider)
+		public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
+            ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider, UserParser userParser)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
@@ -31,6 +32,7 @@ namespace SimpleChattyServer.Controllers
             _chattyParser = chattyParser;
             _messageParser = messageParser;
             _userDataProvider = userDataProvider;
+            _userParser = userParser;
         }
 
         [HttpGet]
@@ -581,6 +583,12 @@ namespace SimpleChattyServer.Controllers
         public SuccessResponse NotificationsSetUserSetup()
         {
             return new SuccessResponse();
+        }
+
+        [HttpGet("getUserId")]
+        public async Task<GetUserIdResponse> GetUserId(string userName)
+        {
+            return new GetUserIdResponse(await _userParser.GetUserIdFromName(userName), userName);
         }
 
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
