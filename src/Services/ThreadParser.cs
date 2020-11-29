@@ -57,9 +57,9 @@ namespace SimpleChattyServer.Services
                     treePost.Body = bodyPost.Body;
                     treePost.Date = bodyPost.Date;
                     treePost.AuthorId = bodyPost.AuthorId;
+                    treePost.AuthorFlair = bodyPost.AuthorFlair;
                 }
             }
-
             return tree;
         }
 
@@ -85,6 +85,7 @@ namespace SimpleChattyServer.Services
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
                 reply.AuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\""));
+                reply.AuthorFlair = ParseUserFlair("");
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
@@ -345,5 +346,13 @@ namespace SimpleChattyServer.Services
                 str
                 .Replace("&lt;", "&amp;lt;")
                 .Replace("&gt;", "&amp;gt;"));
+
+        private static UserFlair ParseUserFlair(string str)
+        {
+            var flair = new UserFlair();
+            flair.IsTenYear = true;
+            flair.MercuryStatus = MercuryStatus.Mega;
+            return flair;
+        }
     }
 }

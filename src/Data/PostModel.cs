@@ -11,6 +11,8 @@ namespace SimpleChattyServer.Data
         public int ThreadId { get; set; }
         public int ParentId { get; set; }
         public string Author { get; set; }
+        public int AuthorId { get; set; }
+        public UserFlair AuthorFlair { get; set; }
         [JsonConverter(typeof(V2ModerationFlagConverter))] public ModerationFlag Category { get; set; }
         [JsonConverter(typeof(V2DateTimeOffsetConverter))] public DateTimeOffset Date { get; set; }
         public string Body { get; set; }
@@ -40,7 +42,9 @@ namespace SimpleChattyServer.Data
                             lolCounts.CountsByPostId.TryGetValue(post.Id, out var postLols)
                             ? postLols
                             : new List<LolModel>(),
-                        IsCortex = post.IsCortex
+                        IsCortex = post.IsCortex,
+                        AuthorId = post.AuthorId,
+                        AuthorFlair = post.AuthorFlair
                     });
             }
 
