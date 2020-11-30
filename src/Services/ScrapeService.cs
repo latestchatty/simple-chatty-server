@@ -301,6 +301,8 @@ namespace SimpleChattyServer.Services
                     {
                         newPost.Body = oldPost.Body;
                         newPost.Date = oldPost.Date;
+                        newPost.AuthorId = oldPost.AuthorId;
+                        newPost.AuthorFlair = oldPost.AuthorFlair;
                     }
                 }
             }
@@ -325,6 +327,8 @@ namespace SimpleChattyServer.Services
                 {
                     newChattyPost.Body = postBody.Body;
                     newChattyPost.Date = postBody.Date;
+                    newChattyPost.AuthorId = postBody.AuthorId;
+                    newChattyPost.AuthorFlair = postBody.AuthorFlair;
                 }
             }
         }
