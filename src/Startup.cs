@@ -61,7 +61,7 @@ namespace SimpleChattyServer
                 options => options.Filters.Add(new HttpResponseExceptionFilter()))
                 // I don't think this will break any existing enum stuff since it all appears custom
                 // Any new enums will be serialized as strings and reflected in the swagger docs.
-                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(x =>
             {
