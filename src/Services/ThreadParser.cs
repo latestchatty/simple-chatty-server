@@ -57,9 +57,9 @@ namespace SimpleChattyServer.Services
                     treePost.Body = bodyPost.Body;
                     treePost.Date = bodyPost.Date;
                     treePost.AuthorId = bodyPost.AuthorId;
+                    treePost.AuthorFlair = bodyPost.AuthorFlair;
                 }
             }
-
             return tree;
         }
 
@@ -88,6 +88,7 @@ namespace SimpleChattyServer.Services
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
+                reply.AuthorFlair = ParseUserFlair(p.Clip(new string[] { "<a class=\"shackmsg\"", "</a>"}, "</span>"));
                 reply.Body = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
                     "</div>"))));
@@ -125,6 +126,8 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
+            var rootAuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\""));
+            var rootAuthorFlair = ParseUserFlair(p.Clip(new string[] { "<a class=\"shackmsg\"", "</a>"}, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
                 "</div>"))));
@@ -149,6 +152,8 @@ namespace SimpleChattyServer.Services
                 {
                     reply.Body = rootBody;
                     reply.Date = rootDate;
+                    reply.AuthorId = rootAuthorId;
+                    reply.AuthorFlair = rootAuthorFlair;
                 }
 
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
@@ -345,5 +350,31 @@ namespace SimpleChattyServer.Services
                 str
                 .Replace("&lt;", "&amp;lt;")
                 .Replace("&gt;", "&amp;gt;"));
+
+        private static UserFlair ParseUserFlair(string str)
+        {
+            var flair = new UserFlair();
+            flair.IsTenYear = str.Contains("legacy 10 years");
+            flair.IsTwentyYear = str.Contains("legacy 20 years");
+            flair.IsModerator = str.Contains("title=\"moderator\""); 
+            flair.MercuryStatus = MercuryStatus.None;
+            if(str.Contains("mercury mega"))
+            {
+                flair.MercuryStatus = MercuryStatus.Mega;
+            }
+            else if(str.Contains("mercury ultra mega"))
+            {
+                flair.MercuryStatus = MercuryStatus.UltraMega;
+            }
+            else if (str.Contains("mercury super mega"))
+            {
+                flair.MercuryStatus = MercuryStatus.SuperMega;
+            }
+            else if (str.Contains("mercury ludicrous"))
+            {
+                flair.MercuryStatus = MercuryStatus.Ludicrous;
+            }
+            return flair;
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json.Serialization;
 using LettuceEncrypt;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -57,7 +58,10 @@ namespace SimpleChattyServer
             services.AddHostedService<DukeNukedService>();
             services.AddHostedService<ScrapeService>();
             services.AddControllers(
-                options => options.Filters.Add(new HttpResponseExceptionFilter()));
+                options => options.Filters.Add(new HttpResponseExceptionFilter()))
+                // I don't think this will break any existing enum stuff since it all appears custom
+                // Any new enums will be serialized as strings and reflected in the swagger docs.
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(x =>
             {
