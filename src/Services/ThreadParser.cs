@@ -88,7 +88,7 @@ namespace SimpleChattyServer.Services
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
-                reply.AuthorFlair = ParseUserFlair(p.Clip(new string[] { "<a class=\"shackmsg\"", "</a>"}, "</span>"));
+                reply.AuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
                 reply.Body = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                     new[] { "<div class=\"postbody\">", ">" },
                     "</div>"))));
@@ -126,8 +126,8 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
-            var rootAuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\""));
-            var rootAuthorFlair = ParseUserFlair(p.Clip(new string[] { "<a class=\"shackmsg\"", "</a>"}, "</span>"));
+            var rootAuthorId = int.Parse(p.Clip(new[] { "fpauthor_", "_" }, "\""));
+            var rootAuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
                 "</div>"))));
