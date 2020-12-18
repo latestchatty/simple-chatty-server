@@ -87,7 +87,7 @@ namespace SimpleChattyServer
         public async Task<T> WithWriteLock<T>(string caller, Func<Task<T>> funcAsync)
         {
             var value = default(T);
-            await WithWriteLock(caller, action: async () => value = await funcAsync());
+            await WithWriteLock(caller, actionAsync: async () => value = await funcAsync());
             return value;
         }
     }
