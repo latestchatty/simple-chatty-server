@@ -84,7 +84,7 @@ namespace SimpleChattyServer.Services
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
-                reply.AuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\""));
+                reply.AuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\"").Replace(" fpfrozen", ""));
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
@@ -94,7 +94,7 @@ namespace SimpleChattyServer.Services
                     "</div>"))));
                 reply.Date = DateParser.Parse(StripTags(p.Clip(
                     new[] { "<div class=\"postdate\">", ">" },
-                    "T</div")) + "T");
+                    "T</div")).Replace("Flag", "") + "T");
                 list.Add(reply);
             }
 
@@ -126,14 +126,15 @@ namespace SimpleChattyServer.Services
                 throw new MissingThreadException($"Thread does not exist.");
 
             var list = new List<ChattyPost>();
-            var rootAuthorId = int.Parse(p.Clip(new[] { "fpauthor_", "_" }, "\""));
+            
+            var rootAuthorId = int.Parse(p.Clip(new[] { "fpauthor_", "_" }, "\"").Replace(" fpfrozen", ""));
             var rootAuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
                 "</div>"))));
             var rootDate = DateParser.Parse(StripTags(p.Clip(
                 new[] { "<div class=\"postdate\">", ">" },
-                "T</div")) + "T");
+                "T</div")).Replace("Flag", "") + "T");
 
             var depth = 0;
             var nextThread = p.Peek(1, "<div class=\"fullpost op");
