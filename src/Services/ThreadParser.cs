@@ -58,6 +58,7 @@ namespace SimpleChattyServer.Services
                     treePost.Date = bodyPost.Date;
                     treePost.AuthorId = bodyPost.AuthorId;
                     treePost.AuthorFlair = bodyPost.AuthorFlair;
+                    treePost.IsFrozen = bodyPost.IsFrozen;
                 }
             }
             return tree;
@@ -84,7 +85,9 @@ namespace SimpleChattyServer.Services
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
-                reply.AuthorId = int.Parse(p.Clip(new [] { "fpauthor_", "_" }, "\"").Replace(" fpfrozen", ""));
+                var authorSection = p.Clip(new [] { "fpauthor_", "_" }, "\"");
+                reply.AuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
+                reply.IsFrozen = authorSection.Contains("fpfrozen");
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
                     "</a>")).Trim();
@@ -127,7 +130,9 @@ namespace SimpleChattyServer.Services
 
             var list = new List<ChattyPost>();
             
-            var rootAuthorId = int.Parse(p.Clip(new[] { "fpauthor_", "_" }, "\"").Replace(" fpfrozen", ""));
+            var authorSection = p.Clip(new [] { "fpauthor_", "_" }, "\"");
+            var rootAuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
+            var rootIsFrozen = authorSection.Contains("fpfrozen");
             var rootAuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 new[] { "<div class=\"postbody\">", ">" },
@@ -155,6 +160,7 @@ namespace SimpleChattyServer.Services
                     reply.Date = rootDate;
                     reply.AuthorId = rootAuthorId;
                     reply.AuthorFlair = rootAuthorFlair;
+                    reply.IsFrozen = rootIsFrozen;
                 }
 
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(

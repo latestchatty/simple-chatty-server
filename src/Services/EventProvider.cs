@@ -252,6 +252,24 @@ namespace SimpleChattyServer.Services
                                         }
                                     });
                             }
+
+                            if (oldPost.IsFrozen != newPost.IsFrozen)
+                            {
+                                _logger.LogInformation($"Post {newPost.Id} freeze change: {oldPost.IsFrozen} -> {newPost.IsFrozen}.");
+                                newEvents.Add(
+                                    new EventModel
+                                    {
+                                        EventId = nextEventId++,
+                                        EventDate = DateTimeOffset.Now,
+                                        EventType = EventType.PostFreezeChange,
+                                        EventData = new PostFrozenChangeEventDataModel
+                                        {
+                                            PostId = newPost.Id,
+                                            Frozen = newPost.IsFrozen
+                                        }
+                                    }
+                                );
+                            }
                         }
                     }
 

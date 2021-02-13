@@ -6,6 +6,7 @@ namespace SimpleChattyServer.Data
         CategoryChange,
         LolCountsUpdate,
         ReadStatusUpdate,
-        PostChange
+        PostChange,
+        PostFreezeChange
     }
 }

@@ -303,6 +303,7 @@ namespace SimpleChattyServer.Services
                         newPost.Date = oldPost.Date;
                         newPost.AuthorId = oldPost.AuthorId;
                         newPost.AuthorFlair = oldPost.AuthorFlair;
+                        newPost.IsFrozen = oldPost.IsFrozen;
                     }
                 }
             }
@@ -329,6 +330,7 @@ namespace SimpleChattyServer.Services
                     newChattyPost.Date = postBody.Date;
                     newChattyPost.AuthorId = postBody.AuthorId;
                     newChattyPost.AuthorFlair = postBody.AuthorFlair;
+                    newChattyPost.IsFrozen = postBody.IsFrozen;
                 }
             }
         }

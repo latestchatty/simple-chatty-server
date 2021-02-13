@@ -5,71 +5,72 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
-- [Introduction](#introduction)
-  - [Protocols](#protocols)
-  - [Data Types](#data-types)
-    - [Request and response types](#request-and-response-types)
-    - [Response-only types](#response-only-types)
-  - [Error Responses](#error-responses)
-  - [Client Implementation Guide](#client-implementation-guide)
-- [Threads](#threads)
-  - [GET /v2/getChatty](#get-v2getchatty)
-  - [GET /v2/getChattyRootPosts](#get-v2getchattyrootposts)
-  - [GET /v2/getThread](#get-v2getthread)
-  - [GET /v2/getThreadPostCount](#get-v2getthreadpostcount)
-- [Posts](#posts)
-  - [GET /v2/getNewestPostInfo](#get-v2getnewestpostinfo)
-  - [GET /v2/getPost](#get-v2getpost)
-  - [POST /v2/postComment](#post-v2postcomment)
-  - [GET /v2/search](#get-v2search)
-  - [POST /v2/requestReindex](#post-v2requestreindex)
-  - [POST /v2/setPostCategory](#post-v2setpostcategory)
-- [Events](#events)
-  - [GET /v2/getNewestEventId](#get-v2getnewesteventid)
-  - [GET /v2/waitForEvent](#get-v2waitforevent)
-  - [GET /v2/pollForEvent](#get-v2pollforevent)
-- [Users](#users)
-  - [GET /v2/checkConnection](#get-v2checkconnection)
-  - [POST /v2/verifyCredentials](#post-v2verifycredentials)
-  - [GET /v2/getAllTenYearUsers](#get-v2getalltenyearusers)
-- [Messages](#messages)
-  - [POST /v2/getMessages](#post-v2getmessages)
-  - [POST /v2/getMessageCount](#post-v2getmessagecount)
-  - [POST /v2/sendMessage](#post-v2sendmessage)
-  - [POST /v2/markMessageRead](#post-v2markmessageread)
-  - [POST /v2/deleteMessage](#post-v2deletemessage)
-- [Client Data](#client-data)
-  - [GET /v2/clientData/getCategoryFilters](#get-v2clientdatagetcategoryfilters)
-  - [POST /v2/clientData/setCategoryFilters](#post-v2clientdatasetcategoryfilters)
-  - [GET /v2/clientData/getMarkedPosts](#get-v2clientdatagetmarkedposts)
-  - [POST /v2/clientData/clearMarkedPosts](#post-v2clientdataclearmarkedposts)
-  - [POST /v2/clientData/markPost](#post-v2clientdatamarkpost)
-  - [GET /v2/clientData/getClientData](#get-v2clientdatagetclientdata)
-  - [POST /v2/clientData/setClientData](#post-v2clientdatasetclientdata)
-  - [GET /v2/clientData/getReadStatus](#get-v2clientdatagetreadstatus)
-  - [POST /v2/clientData/setReadStatus](#post-v2clientdatasetreadstatus)
-- [Notifications](#notifications)
-  - [GET /v2/notifications/generateId](#get-v2notificationsgenerateid)
-  - [POST /v2/notifications/registerNotifierClient](#post-v2notificationsregisternotifierclient)
-  - [POST /v2/notifications/registerRichClient](#post-v2notificationsregisterrichclient)
-  - [POST /v2/notifications/detachAccount](#post-v2notificationsdetachaccount)
-  - [POST /v2/notifications/waitForNotification](#post-v2notificationswaitfornotification)
-  - [POST /v2/notifications/getUserSetup](#post-v2notificationsgetusersetup)
-  - [POST /v2/notifications/setUserSetup](#post-v2notificationssetusersetup)
-- [Legacy v1 API](#legacy-v1-api)
-  - [Data Types (v1)](#data-types-v1)
-  - [GET /chatty/about](#get-chattyabout)
-  - [GET /chatty/index.json](#get-chattyindexjson)
-  - [GET /chatty/`[INT]`.`[INT]`.json](#get-chattyintintjson)
-  - [GET /chatty/thread/`[INT]`.json](#get-chattythreadintjson)
-  - [GET /chatty/search.json](#get-chattysearchjson)
-  - [GET /chatty/stories.json](#get-chattystoriesjson)
-  - [GET /chatty/stories/`[INT]`.json](#get-chattystoriesintjson)
-  - [GET /chatty/stories/`[INT]`.`[INT]`.json](#get-chattystoriesintintjson)
-  - [GET /chatty/messages.json](#get-chattymessagesjson)
-  - [PUT /chatty/messages/`[INT]`.json](#put-chattymessagesintjson)
-  - [POST /chatty/messages/send/](#post-chattymessagessend)
-  - [POST /chatty/post/](#post-chattypost)
+- [WinChatty API](#winchatty-api)
+  - [Introduction](#introduction)
+    - [Protocols](#protocols)
+    - [Data Types](#data-types)
+      - [Request and response types](#request-and-response-types)
+      - [Response-only types](#response-only-types)
+    - [Error Responses](#error-responses)
+    - [Client Implementation Guide](#client-implementation-guide)
+  - [Threads](#threads)
+    - [GET /v2/getChatty](#get-v2getchatty)
+    - [GET /v2/getChattyRootPosts](#get-v2getchattyrootposts)
+    - [GET /v2/getThread](#get-v2getthread)
+    - [GET /v2/getThreadPostCount](#get-v2getthreadpostcount)
+  - [Posts](#posts)
+    - [GET /v2/getNewestPostInfo](#get-v2getnewestpostinfo)
+    - [GET /v2/getPost](#get-v2getpost)
+    - [POST /v2/postComment](#post-v2postcomment)
+    - [GET /v2/search](#get-v2search)
+    - [POST /v2/requestReindex](#post-v2requestreindex)
+    - [POST /v2/setPostCategory](#post-v2setpostcategory)
+  - [Events](#events)
+    - [GET /v2/getNewestEventId](#get-v2getnewesteventid)
+    - [GET /v2/waitForEvent](#get-v2waitforevent)
+    - [GET /v2/pollForEvent](#get-v2pollforevent)
+  - [Users](#users)
+    - [GET /v2/checkConnection](#get-v2checkconnection)
+    - [POST /v2/verifyCredentials](#post-v2verifycredentials)
+    - [GET /v2/getAllTenYearUsers](#get-v2getalltenyearusers)
+  - [Messages](#messages)
+    - [POST /v2/getMessages](#post-v2getmessages)
+    - [POST /v2/getMessageCount](#post-v2getmessagecount)
+    - [POST /v2/sendMessage](#post-v2sendmessage)
+    - [POST /v2/markMessageRead](#post-v2markmessageread)
+    - [POST /v2/deleteMessage](#post-v2deletemessage)
+  - [Client Data](#client-data)
+    - [GET /v2/clientData/getCategoryFilters](#get-v2clientdatagetcategoryfilters)
+    - [POST /v2/clientData/setCategoryFilters](#post-v2clientdatasetcategoryfilters)
+    - [GET /v2/clientData/getMarkedPosts](#get-v2clientdatagetmarkedposts)
+    - [POST /v2/clientData/clearMarkedPosts](#post-v2clientdataclearmarkedposts)
+    - [POST /v2/clientData/markPost](#post-v2clientdatamarkpost)
+    - [GET /v2/clientData/getClientData](#get-v2clientdatagetclientdata)
+    - [POST /v2/clientData/setClientData](#post-v2clientdatasetclientdata)
+    - [GET /v2/clientData/getReadStatus](#get-v2clientdatagetreadstatus)
+    - [POST /v2/clientData/setReadStatus](#post-v2clientdatasetreadstatus)
+  - [Notifications](#notifications)
+    - [GET /v2/notifications/generateId](#get-v2notificationsgenerateid)
+    - [POST /v2/notifications/registerNotifierClient](#post-v2notificationsregisternotifierclient)
+    - [POST /v2/notifications/registerRichClient](#post-v2notificationsregisterrichclient)
+    - [POST /v2/notifications/detachAccount](#post-v2notificationsdetachaccount)
+    - [POST /v2/notifications/waitForNotification](#post-v2notificationswaitfornotification)
+    - [POST /v2/notifications/getUserSetup](#post-v2notificationsgetusersetup)
+    - [POST /v2/notifications/setUserSetup](#post-v2notificationssetusersetup)
+  - [Legacy v1 API](#legacy-v1-api)
+    - [Data Types (v1)](#data-types-v1)
+    - [GET /chatty/about](#get-chattyabout)
+    - [GET /chatty/index.json](#get-chattyindexjson)
+    - [GET /chatty/`[INT]`.`[INT]`.json](#get-chattyintintjson)
+    - [GET /chatty/thread/`[INT]`.json](#get-chattythreadintjson)
+    - [GET /chatty/search.json](#get-chattysearchjson)
+    - [GET /chatty/stories.json](#get-chattystoriesjson)
+    - [GET /chatty/stories/`[INT]`.json](#get-chattystoriesintjson)
+    - [GET /chatty/stories/`[INT]`.`[INT]`.json](#get-chattystoriesintintjson)
+    - [GET /chatty/messages.json](#get-chattymessagesjson)
+    - [PUT /chatty/messages/`[INT]`.json](#put-chattymessagesintjson)
+    - [POST /chatty/messages/send/](#post-chattymessagessend)
+    - [POST /chatty/post/](#post-chattypost)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -121,7 +122,8 @@ Type | Description
 >      },
 >      ...
 >   ],
->   "isCortex": [BIT]
+>   "isCortex": [BIT],
+>   "isFrozen": [BIT]
 >}
 >```
 
@@ -155,6 +157,7 @@ Type | Description
 >- `"lolCountsUpdate"` - data will be `[E_LOLS]`
 >- `"readStatusUpdate"` - data will be `[E_READ]`
 >- `"postChange"` - data will be `[E_CHGP]`
+>- `"postFreezeChange"` - data will be `[E_CHFRZ]`
 
 `[E_DATA]` - Event-specific data.  Abstract base type which may be any one of the following concrete types:
 >- `[E_NEWP]` - new post
@@ -162,6 +165,7 @@ Type | Description
 >- `[E_LOLS]` - tag counts update
 >- `[E_READ]` - thread read status update
 >- `[E_CHGP]` - post author/body change (i.e. the user deleted their account)
+>- `[E_CHFRZ]` - post freeze status changed
 
 `[E_NEWP]` - New post event data.
 >```
@@ -206,6 +210,14 @@ Type | Description
 >```
 >{
 >   "postId": [INT]
+>}
+>```
+
+`[E_CHFRZ]` - Post freeze change event data.
+>```
+>{
+>   "postId": [INT]
+>   "frozen": [BIT]
 >}
 >```
 

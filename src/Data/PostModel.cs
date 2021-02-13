@@ -18,6 +18,7 @@ namespace SimpleChattyServer.Data
         public string Body { get; set; }
         public List<LolModel> Lols { get; set; }
         public bool IsCortex { get; set; }
+        public bool IsFrozen { get; set; }
 
         public static List<PostModel> CreateList(ChattyThread thread, ThreadLolCounts lolCounts)
         {
@@ -44,7 +45,8 @@ namespace SimpleChattyServer.Data
                             : new List<LolModel>(),
                         IsCortex = post.IsCortex,
                         AuthorId = post.AuthorId,
-                        AuthorFlair = post.AuthorFlair
+                        AuthorFlair = post.AuthorFlair,
+                        IsFrozen = post.IsFrozen
                     });
             }
 

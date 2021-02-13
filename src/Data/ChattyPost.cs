@@ -13,5 +13,6 @@ namespace SimpleChattyServer.Data
         public string Body { get; set; }
         public DateTimeOffset Date { get; set; }
         public bool IsCortex { get; set; }
+        public bool IsFrozen { get; set; }
     }
 }
