@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
@@ -15,6 +16,12 @@ namespace SimpleChattyServer
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((_, builder) =>
+                {
+                    builder.AddJsonFile("appsettings.json");
+                    builder.AddEnvironmentVariables();
+                    builder.AddCommandLine(args);
+                })
                 .UseSystemd()
                 .ConfigureLogging((context, builder) =>
                 {
