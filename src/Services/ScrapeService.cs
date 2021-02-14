@@ -305,7 +305,6 @@ namespace SimpleChattyServer.Services
                         newPost.Date = oldPost.Date;
                         newPost.AuthorId = oldPost.AuthorId;
                         newPost.AuthorFlair = oldPost.AuthorFlair;
-                        newPost.IsFrozen = oldPost.IsFrozen;
                     }
                 }
             }

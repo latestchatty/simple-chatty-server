@@ -57,6 +57,9 @@ namespace SimpleChattyServer.Data
                             case EventType.ReadStatusUpdate:
                                 eventModel.EventData = JsonSerializer.Deserialize<ReadStatusUpdateEventDataModel>(ref reader, innerOptions);
                                 break;
+                            case EventType.PostFreezeChange:
+                                eventModel.EventData = JsonSerializer.Deserialize<PostFrozenChangeEventDataModel>(ref reader, innerOptions);
+                                break;
                             default:
                                 Throw();
                                 break;

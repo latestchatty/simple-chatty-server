@@ -21,6 +21,7 @@ namespace SimpleChattyServer.Data
                 case EventType.LolCountsUpdate: return "lolCountsUpdate";
                 case EventType.ReadStatusUpdate: return "readStatusUpdate";
                 case EventType.PostChange: return "postChange";
+                case EventType.PostFreezeChange: return "postFreezeChange";
                 default: throw new ArgumentOutOfRangeException(nameof(self));
             }
         }
@@ -34,6 +35,7 @@ namespace SimpleChattyServer.Data
                 case "lolCountsUpdate": return EventType.LolCountsUpdate;
                 case "readStatusUpdate": return EventType.ReadStatusUpdate;
                 case "postChange": return EventType.PostChange;
+                case "postFreezeChange": return EventType.PostFreezeChange;
                 default: throw new ArgumentOutOfRangeException(nameof(str));
             }
         }
