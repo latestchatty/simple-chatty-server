@@ -238,8 +238,10 @@ namespace SimpleChattyServer.Services
         {
             try
             {
-                await GetThreadTree(threadId);
-                return true;
+                var tree = await GetThreadTree(threadId);
+                // make sure the ID we were given is the actual root of the thread. otherwise, this may be a thread
+                // that got merged and is now a subthread elsewhere
+                return tree.ThreadId == threadId;
             }
             catch (MissingThreadException)
             {

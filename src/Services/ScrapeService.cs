@@ -291,7 +291,9 @@ namespace SimpleChattyServer.Services
             if (_state == null)
                 return;
 
-            var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts).ToDictionary(x => x.Id);
+            var oldPostsById = _state.Chatty.Threads.SelectMany(x => x.Posts)
+                .GroupBy(x => x.Id).Select(x => x.First()) // workaround for thread merging
+                .ToDictionary(x => x.Id);
 
             foreach (var newThread in newChatty.Threads)
             {
