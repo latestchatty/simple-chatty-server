@@ -9,6 +9,8 @@ using SimpleChattyServer.Data.Requests;
 using SimpleChattyServer.Data.Responses;
 using SimpleChattyServer.Services;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using System.Web;
 
 namespace SimpleChattyServer.Controllers
 {
@@ -23,10 +25,11 @@ namespace SimpleChattyServer.Controllers
         private readonly UserDataProvider _userDataProvider;
         private readonly UserParser _userParser;
         private readonly CortexParser _cortexParser;
+        private readonly DownloadService _downloadService;
 
         public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
             ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider,
-            UserParser userParser, CortexParser cortexParser)
+            UserParser userParser, CortexParser cortexParser, DownloadService downloadService)
         {
             _chattyProvider = chattyProvider;
             _searchParser = searchParser;
@@ -36,6 +39,7 @@ namespace SimpleChattyServer.Controllers
             _userDataProvider = userDataProvider;
             _userParser = userParser;
             _cortexParser = cortexParser;
+            _downloadService = downloadService;
         }
 
         [HttpGet]
@@ -598,6 +602,29 @@ namespace SimpleChattyServer.Controllers
         public async Task<GetCortexUserResponse> GetCortexUser(string userName)
         {
             return new GetCortexUserResponse() { UserData = await _cortexParser.GetCortexUserData(userName) };
+        }
+
+        [HttpPost("lol")]
+        public async Task<ContentResult> Lol([FromForm] LolRequest request)
+        {
+            var query = HttpUtility.ParseQueryString("");
+            query["action2"] = "ext_create_tag_via_api";
+            query["id"] = $"{request.What}";
+            query["user"] = $"{request.Who}";
+            query["tag"] = string.IsNullOrEmpty(request.Tag) ? "lol" : request.Tag;
+            if (request.Action == "untag")
+                query["untag"] = "1";
+            query["secret"] = _downloadService.LolApiKey;
+
+            var result = await _downloadService.DownloadWithUserLogin(
+                "https://www.shacknews.com/api2/api-index.php?" + query.ToString(),
+                request.Who,
+                request.Password,
+                "");
+
+            Response.StatusCode = 200;
+            Response.ContentType = "text/plain";
+            return Content(result);
         }
 
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
