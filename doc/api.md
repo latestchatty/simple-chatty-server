@@ -391,7 +391,7 @@ Parameters:
 - `what=[INT]` - Post ID.
 - `who=[STR]` - Username.
 - `tag=[STR]` - "lol", "inf", etc.
-- `action=[STR?]` - Set to "untag" to untag, omit or specify anything else sets a tag.
+- `action=[STR?]` - Set to "untag" to untag, omit or specify anything else to set a tag.
 - `password=[STR]` - Password.
 
 Response: JSON returned as-is from the Shack endpoint.

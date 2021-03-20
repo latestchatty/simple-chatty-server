@@ -138,7 +138,5 @@ namespace SimpleChattyServer.Services
             using var requestStreamWriter = new StreamWriter(requestStream, _utf8Encoding);
             await requestStreamWriter.WriteAsync(query);
         }
-
-        public string LolApiKey => _sharedLoginOptions.LolApiSecret;
     }
 }

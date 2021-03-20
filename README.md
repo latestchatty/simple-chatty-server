@@ -9,11 +9,17 @@ This service powers `winchatty.com`. [View the API documentation](https://github
 
 ## Deployment
 
-- If a change to the production `appsettings.json` is needed, set it in Parameter Store in the key `/SimpleChattyServer/config`.
+- Set the production `appsettings.json` text in Parameter Store in the key `/SimpleChattyServer/config`.
 - In the `build` directory, run `./clean.sh && ./publish.sh && ./upload.sh`.
 - In the `terraform` directory, run `terraform taint aws_instance.simple_chatty_server && terraform apply`.
 
 ## Updating an existing deployment
+
+If you need to update appsettings.json, set it in Parameter Store and then run as root:
+
+```
+aws ssm get-parameter --name /SimpleChattyServer/config --query "Parameter.Value" --output text --region us-east-1 --with-decryption > /opt/simple-chatty-server/appsettings.json
+```
 
 Run as root:
 

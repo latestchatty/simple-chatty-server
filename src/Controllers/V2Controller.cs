@@ -608,19 +608,16 @@ namespace SimpleChattyServer.Controllers
         public async Task<ContentResult> Lol([FromForm] LolRequest request)
         {
             var query = HttpUtility.ParseQueryString("");
-            query["action2"] = "ext_create_tag_via_api";
             query["id"] = $"{request.What}";
-            query["user"] = $"{request.Who}";
             query["tag"] = string.IsNullOrEmpty(request.Tag) ? "lol" : request.Tag;
             if (request.Action == "untag")
                 query["untag"] = "1";
-            query["secret"] = _downloadService.LolApiKey;
 
             var result = await _downloadService.DownloadWithUserLogin(
-                "https://www.shacknews.com/api2/api-index.php?" + query.ToString(),
+                "https://www.shacknews.com/api2/api-index.php?action2=store_tag",
                 request.Who,
                 request.Password,
-                "");
+                query.ToString());
 
             Response.StatusCode = 200;
             Response.ContentType = "text/plain";
