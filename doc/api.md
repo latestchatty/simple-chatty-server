@@ -399,6 +399,31 @@ Response: JSON returned as-is from the Shack endpoint.
 Errors:
 - `ERR_INVALID_LOGIN`
 
+### GET /v2/getChattyTags
+Gets all post tags in the active chatty, specified by ID.
+Optionally gets tags for a single thread.
+
+Parameters:
+- `threadId=[INT]` - If specified, only tags for the specified thread id will be returned. If ommitted returns all tags for all active threads.
+
+Response:
+```
+{
+   "threadId": [INT] {
+      "countsByPostId": {
+         "postId": [INT] [
+            {
+               "tag": [STR]
+               "count": [INT]
+            },
+            ...
+         ],
+         ...
+      }
+   }
+}
+```
+
 ### POST /v2/postComment
 Posts a new comment.
 

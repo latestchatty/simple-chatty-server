@@ -624,6 +624,23 @@ namespace SimpleChattyServer.Controllers
             return Content(result);
         }
 
+        [HttpGet("getChattyTags")]
+        public async Task<Dictionary<int, ThreadLolCounts>> GetChattyTags(int? threadId)
+        {
+            var lolCounts = _chattyProvider.GetChattyLolCounts();
+            if(threadId.HasValue)
+            {
+                if (!lolCounts.CountsByThreadId.TryGetValue(threadId.Value, out var threadLols))
+                {
+                    threadLols = (await _chattyProvider.GetThreadAndLols(threadId.Value)).Item2;
+                }
+                return new Dictionary<int, ThreadLolCounts> {
+                    { threadId.Value, threadLols }
+                };
+            }
+            return lolCounts.CountsByThreadId;
+        }
+
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
         {
             if (min == 0 && (input == "" || input == null))
