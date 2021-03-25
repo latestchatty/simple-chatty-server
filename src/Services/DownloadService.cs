@@ -55,6 +55,13 @@ namespace SimpleChattyServer.Services
             return await GetResponse(request);
         }
 
+        public async Task<string> DownloadAnonymous(string url, string postBody = null)
+        {
+            var request = CreateRequest(url, method: postBody == null ? "GET" : "POST");
+            if (postBody != null) { await WriteRequestBody(request, postBody); }
+            return await GetResponse(request);
+        }
+
         public NameValueCollection NewQuery() => HttpUtility.ParseQueryString("");
 
         private static HttpWebRequest CreateRequest(
@@ -128,7 +135,7 @@ namespace SimpleChattyServer.Services
             if (html.Contains("{\"result\":{\"valid\":\"true\""))
                 return response.Cookies.Cast<Cookie>().ToList();
             else
-                throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, "Unable to log into the user account.");
+                throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN, $"Unable to log into the user account [{username}].");
         }
 
         private async Task WriteRequestBody(HttpWebRequest request, string query)

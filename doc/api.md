@@ -20,6 +20,8 @@
   - [GET /v2/getNewestPostInfo](#get-v2getnewestpostinfo)
   - [GET /v2/getPost](#get-v2getpost)
   - [POST /v2/lol](#post-v2lol)
+  - [GET /v2/getLolTaggers](#get-v2getloltaggers)
+  - [GET /v2/getChattyTags](#get-v2getchattytags)
   - [POST /v2/postComment](#post-v2postcomment)
   - [GET /v2/search](#get-v2search)
   - [POST /v2/requestReindex](#post-v2requestreindex)
@@ -384,7 +386,7 @@ Response:
 ```
 
 ### POST /v2/lol
-Performs a ShackLOL tag or untag operation.
+Performs a ShackLOL tag or untag operation.  
 This is a pass-through to the Shack's LOL endpoint.
 
 Parameters:
@@ -399,8 +401,19 @@ Response: JSON returned as-is from the Shack endpoint.
 Errors:
 - `ERR_INVALID_LOGIN`
 
+### GET /v2/getLolTaggers
+Gets the users who tagged the provided posts.  
+Optionally filtered by tag.  
+**This is only intended to circumvent CORS for web clients. Thick clients should call the Shack endpoint directly.**
+
+Parameters:
+- `threadIds=[INT+,50]` - The post IDs to retrieve
+- `tagName=[STR]` - If specified, only names of this type will be returned. Example values: `lol`, `tag`, `unf`
+
+Response: JSON returned as-is from the Shack endpoint.
+
 ### GET /v2/getChattyTags
-Gets all post tags in the active chatty, specified by ID.
+Gets all post tags in the active chatty, specified by ID.  
 Optionally gets tags for a single thread.
 
 Parameters:

@@ -641,6 +641,27 @@ namespace SimpleChattyServer.Controllers
             return lolCounts.CountsByThreadId;
         }
 
+        [HttpGet("getLolTaggers")]
+        public async Task<ContentResult> GetLolTaggers(string threadIds, string tagName)
+        {
+            var query = HttpUtility.ParseQueryString("");
+            
+            foreach (var id in ParseIntList(threadIds, nameof(threadIds), 1))
+            {
+                query.Add("ids[]", id.ToString());
+            }
+
+            if(!string.IsNullOrWhiteSpace(tagName)) { query.Add("tag", tagName); }
+
+            var result = await _downloadService.DownloadAnonymous(
+                "https://www.shacknews.com/api2/api-index.php?action2=ext_get_all_raters",
+                query.ToString());
+
+            Response.StatusCode = 200;
+            Response.ContentType = "application/json";
+            return Content(result);
+        }
+
         private static List<int> ParseIntList(string input, string key, int min = 0, int max = int.MaxValue)
         {
             if (min == 0 && (input == "" || input == null))

@@ -122,7 +122,7 @@ namespace SimpleChattyServer.Services
             
             if (response.Contains("You must be logged in to post"))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,
-                    "Unable to log into user account.");
+                    $"Unable to log into user account [{username}].");
             if (response.Contains("Please wait a few minutes before trying to post again"))
                 throw new Api400Exception(Api400Exception.Codes.POST_RATE_LIMIT,
                     "Please wait a few minutes before trying to post again.");            
