@@ -35,6 +35,9 @@ namespace SimpleChattyServer.Services
                 {
                     Messages = new List<MessageModel>()
                 };
+            
+            p.Seek(1, "class=\"tools\"");
+            messagePage.UnreadCount = int.Parse(p.Clip(new string[] {"<span class=\"flag\"", ">"}, "</span>"));
 
             p.Seek(1, "<h2>Message Center</h2>");
 

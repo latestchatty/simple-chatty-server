@@ -7,6 +7,7 @@ namespace SimpleChattyServer.Data
         public int CurrentPage { get; set; }
         public int LastPage { get; set; }
         public int TotalCount { get; set; }
+        public int UnreadCount { get; set; }
         public List<MessageModel> Messages { get; set; }
     }
 }

@@ -391,7 +391,7 @@ namespace SimpleChattyServer.Controllers
             return new GetMessageCountResponse
             {
                 Total = messagePage.TotalCount,
-                Unread = messagePage.Messages.Count(x => x.Unread)
+                Unread = messagePage.UnreadCount
             };
         }
 
