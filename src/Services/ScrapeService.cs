@@ -121,9 +121,14 @@ namespace SimpleChattyServer.Services
             while (!cancel.IsCancellationRequested)
             {
                 var elapsed = await Scrape();
-                var delay = 5 - elapsed.TotalSeconds;
-                if (delay < 0)
-                    delay = 5;
+
+                double delay = 5;
+                
+                // conserve cpu usage at night when nothing is happening
+                var utcNow = DateTime.UtcNow;
+                if (utcNow.Hour >= 7 && utcNow.Hour < 12)
+                    delay = 15;
+
                 try
                 {
                     await Task.Delay(TimeSpan.FromSeconds(delay), cancel);
