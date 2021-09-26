@@ -147,9 +147,10 @@ namespace SimpleChattyServer.Services
             {
                 var oldEventId = await _eventProvider.GetLastEventId();
 
-                stopwatch.Step(nameof(GetChattyWithoutBodies));
+                stopwatch.Step(nameof(_lolParser.DownloadChattyLolCounts));
                 var lolTask = _lolParser.DownloadChattyLolCounts(_state?.LolJson, _state?.LolCounts);
-                var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages);
+
+                var (newPages, newChatty) = await GetChattyWithoutBodies(_state?.Pages, stopwatch);
 
                 if (_state != null)
                 {
@@ -210,7 +211,7 @@ namespace SimpleChattyServer.Services
         }
 
         private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
-            List<ScrapeState.Page> previousPages)
+            List<ScrapeState.Page> previousPages, StepStopwatch stopwatch)
         {
             var chatty = new Chatty { Threads = new List<ChattyThread>(200) };
 
@@ -227,8 +228,8 @@ namespace SimpleChattyServer.Services
                     : null;
                 var (html, chattyPage) =
                     previousPage != null
-                    ? await _chattyParser.GetChattyPage(currentPage, previousPage.Html, previousPage.ChattyPage)
-                    : await _chattyParser.GetChattyPage(currentPage);
+                    ? await _chattyParser.GetChattyPage(stopwatch, currentPage, previousPage.Html, previousPage.ChattyPage)
+                    : await _chattyParser.GetChattyPage(stopwatch, currentPage);
                 newPages.Add(new ScrapeState.Page { Html = html, ChattyPage = chattyPage });
                 lastPage = chattyPage.LastPage;
 

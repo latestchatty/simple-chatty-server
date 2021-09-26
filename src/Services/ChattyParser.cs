@@ -22,12 +22,14 @@ namespace SimpleChattyServer.Services
             _threadParser = threadParser;
         }
 
-        public async Task<(string Html, ChattyPage Page)> GetChattyPage(
+        public async Task<(string Html, ChattyPage Page)> GetChattyPage(StepStopwatch stopwatch,
             int page, string previousHtml = null, ChattyPage previousChattyPage = null)
         {
+            stopwatch.Step($"Download {page}");
             var url = $"https://www.shacknews.com/chatty?page={page}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
+            stopwatch.Step($"Parse {page}");
             // remove the progress meter which changes on every load, so that we'll get identical html when nothing
             // has changed
             html = _progressMeterRegex.Replace(html, "");
