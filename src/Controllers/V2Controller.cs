@@ -281,7 +281,7 @@ namespace SimpleChattyServer.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             var maxTime = TimeSpan.FromMinutes(1);
-            var pollInterval = TimeSpan.FromSeconds(2.5);
+            var pollInterval = TimeSpan.FromSeconds(5);
 
             while (stopwatch.Elapsed < maxTime)
             {
