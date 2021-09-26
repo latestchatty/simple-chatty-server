@@ -64,6 +64,13 @@ namespace SimpleChattyServer.Services
             return tree;
         }
 
+        private static readonly string[] _threadBodiesReplyIdStart = new[] { "<div id=\"item_", "_" };
+        private static readonly string[] _threadBodiesAuthorSectionStart = new [] { "fpauthor_", "_" };
+        private static readonly string[] _threadBodiesReplyAuthorStart = new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" };
+        private static readonly string[] _threadBodiesAuthorFlairStart = new[] { "<a class=\"shackmsg\"", "</a>" };
+        private static readonly string[] _threadBodiesReplyBodyStart = new[] { "<div class=\"postbody\">", ">" };
+        private static readonly string[] _threadBodiesReplyDateStart = new[] { "<div class=\"postdate\">", ">" };
+
         // if the ID doesn't exist, the returned list will be empty
         public async Task<List<ChattyPost>> GetThreadBodies(int threadId)
         {
@@ -80,23 +87,23 @@ namespace SimpleChattyServer.Services
             {
                 var reply = new ChattyPost();
                 reply.Id = int.Parse(p.Clip(
-                    new[] { "<div id=\"item_", "_" },
+                    _threadBodiesReplyIdStart,
                     "\">"));
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
                     new[] { "<div class=\"fullpost", "fpmod_", "_" },
                     " "));
-                var authorSection = p.Clip(new [] { "fpauthor_", "_" }, "\"");
+                var authorSection = p.Clip(_threadBodiesAuthorSectionStart, "\"");
                 reply.AuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
                 reply.IsFrozen = authorSection.Contains("fpfrozen");
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
-                    new[] { "<span class=\"author\">", "<span class=\"user\">", "<a rel=\"nofollow\" href=\"/user/", ">" },
+                    _threadBodiesReplyAuthorStart,
                     "</a>")).Trim();
-                reply.AuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
+                reply.AuthorFlair = ParseUserFlair(p.Clip(_threadBodiesAuthorFlairStart, "</span>"));
                 reply.Body = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
-                    new[] { "<div class=\"postbody\">", ">" },
+                    _threadBodiesReplyBodyStart,
                     "</div>"))));
                 reply.Date = DateParser.Parse(StripTags(p.Clip(
-                    new[] { "<div class=\"postdate\">", ">" },
+                    _threadBodiesReplyDateStart,
                     "T</div")).Replace("Flag", "") + "T");
                 list.Add(reply);
             }
@@ -123,6 +130,14 @@ namespace SimpleChattyServer.Services
             return ParseThreadTree(p, stopAtFullPost: false);
         }
 
+        private static readonly string[] _threadTreeAuthorSectionStart = new [] { "fpauthor_", "_" };
+        private static readonly string[] _threadTreeAuthorFlairStart = new[] { "<a class=\"shackmsg\"", "</a>" };
+        private static readonly string[] _threadTreeRootBodyStart = new[] { "<div class=\"postbody\">", ">" };
+        private static readonly string[] _threadTreeRootDateStart = new[] { "<div class=\"postdate\">", ">" };
+        private static readonly string[] _threadTreeReplyCategoryStart = new[] { "<div class=\"oneline", "olmod_", "_" };
+        private static readonly string[] _threadTreeReplyIdStart = new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" };
+        private static readonly string[] _threadTreeReplyAuthorStart = new[] { "<span class=\"oneline_user", ">" };
+
         public ChattyThread ParseThreadTree(Parser p, bool stopAtFullPost = true)
         {
             if (p.Peek(1, "<div class=\"postbody\">") == -1)
@@ -130,15 +145,15 @@ namespace SimpleChattyServer.Services
 
             var list = new List<ChattyPost>();
             
-            var authorSection = p.Clip(new [] { "fpauthor_", "_" }, "\"");
+            var authorSection = p.Clip(_threadTreeAuthorSectionStart, "\"");
             var rootAuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
             var rootIsFrozen = authorSection.Contains("fpfrozen");
-            var rootAuthorFlair = ParseUserFlair(p.Clip(new[] { "<a class=\"shackmsg\"", "</a>" }, "</span>"));
+            var rootAuthorFlair = ParseUserFlair(p.Clip(_threadTreeAuthorFlairStart, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
-                new[] { "<div class=\"postbody\">", ">" },
+                _threadTreeRootBodyStart,
                 "</div>"))));
             var rootDate = DateParser.Parse(StripTags(p.Clip(
-                new[] { "<div class=\"postdate\">", ">" },
+                _threadTreeRootDateStart,
                 "T</div")).Replace("Flag", "") + "T");
 
             var depth = 0;
@@ -164,13 +179,13 @@ namespace SimpleChattyServer.Services
                 }
 
                 reply.Category = V2ModerationFlagConverter.Parse(p.Clip(
-                    new[] { "<div class=\"oneline", "olmod_", "_" },
+                    _threadTreeReplyCategoryStart,
                     " "));
                 reply.Id = int.Parse(p.Clip(
-                    new[] { "<a class=\"shackmsg\" rel=\"nofollow\" href=\"?id=", "id=", "=" },
+                    _threadTreeReplyIdStart,
                     "\""));
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
-                    new[] { "<span class=\"oneline_user", ">" },
+                    _threadTreeReplyAuthorStart,
                     "</span>"));
 
                 // Determine the next level of depth.
@@ -219,6 +234,8 @@ namespace SimpleChattyServer.Services
             return new ChattyThread { Posts = list };
         }
 
+        private static readonly string[] _contentIdStart = new[] { "value=\"", "\"" };
+
         public async Task<(int ContentTypeId, int ContentId)> GetContentTypeId(int postId)
         {
             var html = await _downloadService.DownloadWithSharedLogin($"https://www.shacknews.com/chatty?id={postId}");
@@ -226,10 +243,10 @@ namespace SimpleChattyServer.Services
             var p = new Parser(html);
             p.Seek(1, "<input type=\"hidden\" name=\"content_type_id\"");
             var contentTypeId = int.Parse(p.Clip(
-                new[] { "value=\"", "\"" },
+                _contentIdStart,
                 "\""));
             var contentId = int.Parse(p.Clip(
-                new[] { "value=\"", "\"" },
+                _contentIdStart,
                 "\""));
             return (contentTypeId, contentId);
         }

@@ -38,6 +38,11 @@ namespace SimpleChattyServer.Services
             return (html, html == previousHtml ? previousChattyPage : ParseChattyPage(html));
         }
 
+        private static readonly string[] _pageNavigationStart = new[] { "<div class=\"pagenavigation\">", ">" };
+        private static readonly string[] _pageCurrentPageStart = new[] { "<a rel=\"nofollow\" class=\"selected_page\"", ">" };
+        private static readonly string[] _pageChattySettingsStart = new[] { "<div id=\"chatty_settings\" class=\"\">", ">" };
+        private static readonly string[] _pageNumThreadsStart = new[] { "<a href=\"/chatty\">", ">" };
+
         private ChattyPage ParseChattyPage(string html)
         {
             _threadParser.CheckContentId(html);
@@ -53,7 +58,7 @@ namespace SimpleChattyServer.Services
             }
             else
             {
-                p.Seek(1, new[] { "<div class=\"pagenavigation\">", ">" });
+                p.Seek(1, _pageNavigationStart);
 
                 if (p.Peek(1, "<a rel=\"nofollow\" class=\"selected_page\"") == -1)
                 {
@@ -62,15 +67,15 @@ namespace SimpleChattyServer.Services
                 else
                 {
                     chattyPage.CurrentPage = int.Parse(p.Clip(
-                        new[] { "<a rel=\"nofollow\" class=\"selected_page\"", ">" },
+                        _pageCurrentPageStart,
                         "</a>"));
                 }
             }
 
-            p.Seek(1, new[] { "<div id=\"chatty_settings\" class=\"\">", ">" });
+            p.Seek(1, _pageChattySettingsStart);
 
             var numThreads = int.Parse(p.Clip(
-                new[] { "<a href=\"/chatty\">", ">" },
+                _pageNumThreadsStart,
                 " Threads"));
             chattyPage.LastPage = (int)Math.Max(Math.Ceiling(numThreads / 40d), 1);
 
