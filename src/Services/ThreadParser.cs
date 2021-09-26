@@ -23,7 +23,7 @@ namespace SimpleChattyServer.Services
         public void CheckContentId(string html)
         {
             var contentTypeIdPrefix = "<input type=\"hidden\" name=\"content_type_id\" id=\"content_type_id\" value=\"";
-            var contentTypeIdPos = html.IndexOf(contentTypeIdPrefix);
+            var contentTypeIdPos = html.IndexOf(contentTypeIdPrefix, StringComparison.Ordinal);
             if (contentTypeIdPos == -1)
                 return;
 
@@ -77,7 +77,7 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/frame_laryn.x?root={threadId}";
             var html = await _downloadService.DownloadWithSharedLogin(url, verifyLoginStatus: false);
 
-            if (!html.Contains("</html>"))
+            if (!html.Contains("</html>", StringComparison.Ordinal))
                 throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
             var p = new Parser(html);
@@ -94,7 +94,7 @@ namespace SimpleChattyServer.Services
                     " "));
                 var authorSection = p.Clip(_threadBodiesAuthorSectionStart, "\"");
                 reply.AuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
-                reply.IsFrozen = authorSection.Contains("fpfrozen");
+                reply.IsFrozen = authorSection.Contains("fpfrozen", StringComparison.Ordinal);
                 reply.Author = HtmlDecodeExceptLtGt(p.Clip(
                     _threadBodiesReplyAuthorStart,
                     "</a>")).Trim();
@@ -116,10 +116,10 @@ namespace SimpleChattyServer.Services
             var url = $"https://www.shacknews.com/chatty?id={id}";
             var html = await _downloadService.DownloadWithSharedLogin(url);
 
-            if (!html.Contains("</html>"))
+            if (!html.Contains("</html>", StringComparison.Ordinal))
                 throw new ParsingException("Shacknews thread tree HTML ended prematurely.");
 
-            if (html.Contains("<p class=\"be_first_to_comment\">"))
+            if (html.Contains("<p class=\"be_first_to_comment\">", StringComparison.Ordinal))
                 throw new MissingThreadException("This post is in the future.");
 
             CheckContentId(html);
@@ -147,7 +147,7 @@ namespace SimpleChattyServer.Services
             
             var authorSection = p.Clip(_threadTreeAuthorSectionStart, "\"");
             var rootAuthorId = int.Parse(authorSection.Replace("fpfrozen", ""));
-            var rootIsFrozen = authorSection.Contains("fpfrozen");
+            var rootIsFrozen = authorSection.Contains("fpfrozen", StringComparison.Ordinal);
             var rootAuthorFlair = ParseUserFlair(p.Clip(_threadTreeAuthorFlairStart, "</span>"));
             var rootBody = MakeSpoilersClickable(HtmlDecodeExceptLtGt(RemoveNewlines(p.Clip(
                 _threadTreeRootBodyStart,
@@ -349,7 +349,7 @@ namespace SimpleChattyServer.Services
 
         private static string StrReplaceAll(string needle, string replacement, string haystack)
         {
-            while (haystack.Contains(needle))
+            while (haystack.Contains(needle, StringComparison.Ordinal))
                 haystack = haystack.Replace(needle, replacement);
 
             return haystack;
@@ -380,23 +380,23 @@ namespace SimpleChattyServer.Services
         private static UserFlair ParseUserFlair(string str)
         {
             var flair = new UserFlair();
-            flair.IsTenYear = str.Contains("legacy 10 years");
-            flair.IsTwentyYear = str.Contains("legacy 20 years");
-            flair.IsModerator = str.Contains("title=\"moderator\""); 
+            flair.IsTenYear = str.Contains("legacy 10 years", StringComparison.Ordinal);
+            flair.IsTwentyYear = str.Contains("legacy 20 years", StringComparison.Ordinal);
+            flair.IsModerator = str.Contains("title=\"moderator\"", StringComparison.Ordinal);
             flair.MercuryStatus = MercuryStatus.None;
-            if(str.Contains("mercury mega"))
+            if (str.Contains("mercury mega", StringComparison.Ordinal))
             {
                 flair.MercuryStatus = MercuryStatus.Mega;
             }
-            else if(str.Contains("mercury ultra mega"))
+            else if (str.Contains("mercury ultra mega", StringComparison.Ordinal))
             {
                 flair.MercuryStatus = MercuryStatus.UltraMega;
             }
-            else if (str.Contains("mercury super mega"))
+            else if (str.Contains("mercury super mega", StringComparison.Ordinal))
             {
                 flair.MercuryStatus = MercuryStatus.SuperMega;
             }
-            else if (str.Contains("mercury ludicrous"))
+            else if (str.Contains("mercury ludicrous", StringComparison.Ordinal))
             {
                 flair.MercuryStatus = MercuryStatus.Ludicrous;
             }

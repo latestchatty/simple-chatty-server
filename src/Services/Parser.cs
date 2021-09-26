@@ -16,7 +16,7 @@ namespace SimpleChattyServer.Services
         }
 
         public int Peek(int cursor, string keyword) =>
-            _html.IndexOf(keyword, Cursors[cursor]);
+            _html.IndexOf(keyword, Cursors[cursor], StringComparison.Ordinal);
 
         public string Clip(string[] beforeKeywords, string afterKeyword)
         {
@@ -43,7 +43,7 @@ namespace SimpleChattyServer.Services
         public void Seek(int cursor, string keyword)
         {
             var i = Cursors[1];
-            var j = _html.IndexOf(keyword, i);
+            var j = _html.IndexOf(keyword, i, StringComparison.Ordinal);
             if (j == -1)
                 throw new Api500Exception(Api500Exception.Codes.SERVER,
                     $"Did not find '{keyword}' starting at index {i}.");

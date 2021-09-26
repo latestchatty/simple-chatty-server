@@ -104,7 +104,7 @@ namespace SimpleChattyServer.Services
         {
             var html = await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/moderators", username, password);
-            return html.Contains("<div id=\"mod_board_head\">");
+            return html.Contains("<div id=\"mod_board_head\">", StringComparison.Ordinal);
         }
     }
 }

@@ -120,19 +120,19 @@ namespace SimpleChattyServer.Services
                 "https://www.shacknews.com/post_chatty.x",
                 username, password, query.ToString());
             
-            if (response.Contains("You must be logged in to post"))
+            if (response.Contains("You must be logged in to post", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,
                     $"Unable to log into user account [{username}].");
-            if (response.Contains("Please wait a few minutes before trying to post again"))
+            if (response.Contains("Please wait a few minutes before trying to post again", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.POST_RATE_LIMIT,
                     "Please wait a few minutes before trying to post again.");            
-            if (response.Contains("banned"))
+            if (response.Contains("banned", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.BANNED,
                     "You are banned.");
-            if (response.Contains("Trying to post to a nuked thread"))
+            if (response.Contains("Trying to post to a nuked thread", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.NUKED,
                     "You cannot reply to a nuked thread or subthread.");
-            if (!response.Contains("fixup_postbox_parent_for_remove("))
+            if (!response.Contains("fixup_postbox_parent_for_remove(", StringComparison.Ordinal))
                 throw new Api500Exception("Unexpected response from server: " + response);
 
             // wait for the event to appear
@@ -179,9 +179,9 @@ namespace SimpleChattyServer.Services
             var response = await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/mod_chatty.x?" + query.ToString(),
                 username, password);
-            if (response.Contains("Invalid moderation flags"))
+            if (response.Contains("Invalid moderation flags", StringComparison.Ordinal))
                 throw new Api500Exception("Possible bug in the API. Server does not understand the moderation flag.");
-            if (!response.Contains("navigate_page_no_history( window, \"/frame_chatty.x?root="))
+            if (!response.Contains("navigate_page_no_history( window, \"/frame_chatty.x?root=", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.NOT_MODERATOR,
                     "Failed to set the post category. User likely does not have moderator privileges.");
         }
