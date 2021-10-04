@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using LettuceEncrypt;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -32,9 +31,6 @@ namespace SimpleChattyServer
             var dataPath = storageSection.GetValue<string>("DataPath");
             if (string.IsNullOrWhiteSpace(dataPath) || !Directory.Exists(dataPath))
                 throw new Exception("Must configure DataPath.");
-            if (Environment.IsProduction())
-                services.AddLettuceEncrypt().PersistDataToDirectory(
-                    new DirectoryInfo(dataPath), null);
             services.AddResponseCompression(
                 options => options.EnableForHttps = true);
             services.AddCors(
