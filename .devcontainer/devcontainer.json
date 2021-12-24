@@ -32,13 +32,12 @@
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"containerEnv": {
+		"ASPNETCORE_ENVIRONMENT": "Development",
 		//This way we don't have to set up a data path in a dev container
 		"STORAGE__DATAPATH": "/tmp/",
 		//Use creds that are stored in local environment variables so there's no risk of committing them in config files. 
 		"SHAREDLOGIN__USERNAME": "${localEnv:SCS_SHAREDLOGIN__USERNAME}",
-		"SHAREDLOGIN__PASSWORD": "${localEnv:SCS_SHAREDLOGIN__PASSWORD}",
-		//Override default url in appsettings with one that's typical for development
-		"URLS": "http://+:5000"
+		"SHAREDLOGIN__PASSWORD": "${localEnv:SCS_SHAREDLOGIN__PASSWORD}"
 	},
 	"shutdownAction": "stopContainer"
 }
