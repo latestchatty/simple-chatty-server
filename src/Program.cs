@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +11,7 @@ namespace SimpleChattyServer
     {
         public static void Main(string[] args)
         {
+            ThreadPool.SetMinThreads(128, 128);
             using var host = CreateHostBuilder(args).Build();
             host.Run();
         }
