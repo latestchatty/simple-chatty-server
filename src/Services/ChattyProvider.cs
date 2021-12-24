@@ -118,7 +118,7 @@ namespace SimpleChattyServer.Services
             var lastEventId = await _eventProvider.GetLastEventId();
             var response = await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/post_chatty.x",
-                username, password, query.ToString());
+                username, password, query);
             
             if (response.Contains("You must be logged in to post", StringComparison.Ordinal))
                 throw new Api400Exception(Api400Exception.Codes.INVALID_LOGIN,

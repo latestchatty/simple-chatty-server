@@ -607,7 +607,7 @@ namespace SimpleChattyServer.Controllers
         [HttpPost("lol")]
         public async Task<ContentResult> Lol([FromForm] LolRequest request)
         {
-            var query = HttpUtility.ParseQueryString("");
+            Dictionary<string, string> query = new();
             query["id"] = $"{request.What}";
             query["tag"] = string.IsNullOrEmpty(request.Tag) ? "lol" : request.Tag;
             if (request.Action == "untag")
@@ -617,7 +617,7 @@ namespace SimpleChattyServer.Controllers
                 "https://www.shacknews.com/api2/api-index.php?action2=store_tag",
                 request.Who,
                 request.Password,
-                query.ToString());
+                query);
 
             Response.StatusCode = 200;
             Response.ContentType = "text/plain";
@@ -644,18 +644,17 @@ namespace SimpleChattyServer.Controllers
         [HttpGet("getLolTaggers")]
         public async Task<ContentResult> GetLolTaggers(string threadIds, string tagName)
         {
-            var query = HttpUtility.ParseQueryString("");
+            Dictionary<string, string> query = new();
             
             foreach (var id in ParseIntList(threadIds, nameof(threadIds), 1))
-            {
                 query.Add("ids[]", id.ToString());
-            }
 
-            if(!string.IsNullOrWhiteSpace(tagName)) { query.Add("tag", tagName); }
+            if (!string.IsNullOrWhiteSpace(tagName))
+                query.Add("tag", tagName);
 
             var result = await _downloadService.DownloadAnonymous(
                 "https://www.shacknews.com/api2/api-index.php?action2=ext_get_all_raters",
-                query.ToString());
+                query);
 
             Response.StatusCode = 200;
             Response.ContentType = "application/json";

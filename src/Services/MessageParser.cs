@@ -110,7 +110,7 @@ namespace SimpleChattyServer.Services
 
             await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/messages/send",
-                username, password, query.ToString());
+                username, password, query);
         }
 
         private async Task<int> GetUserId(string username, string password)
@@ -138,7 +138,7 @@ namespace SimpleChattyServer.Services
 
             await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/messages/delete",
-                username, password, query.ToString());
+                username, password, query);
         }
 
         public async Task MarkMessageAsRead(string username, string password, int id)
@@ -148,7 +148,7 @@ namespace SimpleChattyServer.Services
 
             await _downloadService.DownloadWithUserLogin(
                 "https://www.shacknews.com/messages/read",
-                username, password, query.ToString());
+                username, password, query);
         }
     }
 }

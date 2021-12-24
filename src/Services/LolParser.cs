@@ -58,7 +58,7 @@ namespace SimpleChattyServer.Services
             var json = await _downloadService.DownloadWithSharedLogin(
                 "https://www.shacknews.com/api2/api-index.php?action2=get_all_tags_for_posts",
                 verifyLoginStatus: false,
-                postBody: query.ToString());
+                postBody: query);
 
             var response = JsonSerializer.Deserialize<TagsForPosts>(json,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
