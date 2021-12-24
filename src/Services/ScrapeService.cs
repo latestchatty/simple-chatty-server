@@ -200,7 +200,11 @@ namespace SimpleChattyServer.Services
                     await SaveState();
                 }
 
-                _logger.LogInformation($"Scrape complete. Last event is #{await _eventProvider.GetLastEventId()}. {stopwatch}");
+                ThreadPool.GetMaxThreads(out var maxWorkerThreads, out var maxCompletionPortThreads);
+                ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
+                _logger.LogInformation("Scrape complete. Last event is #{EventId}. {Elapsed}. Worker threads: {WorkerCount}. IOCP threads: {CompletionPortCount}.",
+                    await _eventProvider.GetLastEventId(), stopwatch, maxWorkerThreads - availableWorkerThreads,
+                    maxCompletionPortThreads - availableCompletionPortThreads);
             }
             catch (Exception ex)
             {
