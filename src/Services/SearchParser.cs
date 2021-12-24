@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Web;
 using SimpleChattyServer.Data;
 
 namespace SimpleChattyServer.Services
@@ -20,7 +21,7 @@ namespace SimpleChattyServer.Services
             if (string.IsNullOrEmpty(category))
                 category = "all";
 
-            var query = _downloadService.NewQuery();
+            var query = HttpUtility.ParseQueryString("");
             query.Add("chatty", "1");
             query.Add("type", "4");
             query.Add("chatty_term", terms);
