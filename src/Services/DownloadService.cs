@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data.Options;
 using SimpleChattyServer.Exceptions;
@@ -15,11 +16,15 @@ namespace SimpleChattyServer.Services
     {
         private readonly HttpClient _anonymousHttpClient = CreateHttpClient(timeout: 30);
         private readonly HttpClient _sharedHttpClient = CreateHttpClient(timeout: 30);
+        private readonly LoggedReaderWriterLock _sharedLoginLock;
         private readonly SharedLoginOptions _sharedLoginOptions;
         private readonly Encoding _utf8Encoding;
 
-        public DownloadService(IOptions<SharedLoginOptions> sharedLoginOptions)
+        public DownloadService(
+            ILogger<DownloadService> logger,
+            IOptions<SharedLoginOptions> sharedLoginOptions)
         {
+            _sharedLoginLock = new("Shared login", x => logger.LogDebug(x));
             _sharedLoginOptions = sharedLoginOptions.Value;
             _utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         }
@@ -27,16 +32,29 @@ namespace SimpleChattyServer.Services
         public async Task<string> DownloadWithSharedLogin(string url, bool verifyLoginStatus = true,
             Dictionary<string, string> postBody = null)
         {
-            var html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody);
+            var html = await _sharedLoginLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
+                DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody));
             if (html != null)
                 return html;
 
-            await LogIntoSharedAccount();
+            await _sharedLoginLock.WithWriteLock(nameof(DownloadWithSharedLogin), async () =>
+            {
+                // Another concurrent task might have successfully logged in while we were waiting for the lock, so
+                // let's try it one more time without logging in.
+                html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody);
+                if (html != null)
+                    return;
 
-            html = await DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody);
+                // Nope, it's up to us to log in.
+                await LogIntoSharedAccount();
+            });
+
+            html = await _sharedLoginLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
+                DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody));
             if (html != null)
                 return html;
 
+            // Give up.
             throw new Exception("Unable to log into the shared user account.");
         }
 

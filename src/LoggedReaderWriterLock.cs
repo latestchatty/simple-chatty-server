@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
 
@@ -29,8 +28,6 @@ namespace SimpleChattyServer
                 sw.Restart();
                 await actionAsync();
             }
-            if (sw.Elapsed.TotalMilliseconds > MIN_LOG_MSEC)
-                _logAction?.Invoke($"Caller \"{caller}\" held read lock \"{_name}\" for {sw.Elapsed.TotalMilliseconds:##,#0} ms.");
         }
 
         public Task WithReadLock(string caller, Action action) =>

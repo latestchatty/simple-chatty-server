@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -13,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SimpleChattyServer.Data;
 using SimpleChattyServer.Data.Options;
-using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
@@ -217,6 +215,11 @@ namespace SimpleChattyServer.Services
         private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
             List<ScrapeState.Page> previousPages, StepStopwatch stopwatch)
         {
+            ScrapeState.Page GetPreviousPage(int page) =>
+                previousPages != null && previousPages.Count >= page
+                ? previousPages[page - 1]
+                : null;
+
             var chatty = new Chatty { Threads = new List<ChattyThread>(200) };
 
             var currentPage = 1;
@@ -224,16 +227,26 @@ namespace SimpleChattyServer.Services
             var newPages = new List<ScrapeState.Page>();
             var seenThreadIds = new HashSet<int>();
 
+            // The chatty almost always has three or fewer pages, so try downloading the first three in parallel for speed.
+            stopwatch.Step("First three pages");
+            var firstThreePageTasks =
+                Enumerable.Range(1, 3)
+                .Select(x =>
+                {
+                    var prev = GetPreviousPage(x);
+                    return _chattyParser.GetChattyPage(null, x, prev?.Html, prev?.ChattyPage);
+                })
+                .ToList();
+            await Task.WhenAll(firstThreePageTasks);
+            var firstThreePages = firstThreePageTasks.Select(x => x.GetAwaiter().GetResult()).ToList();
+
             while (currentPage <= lastPage)
             {
-                var previousPage =
-                    previousPages != null && previousPages.Count >= currentPage
-                    ? previousPages[currentPage - 1]
-                    : null;
+                var previousPage = GetPreviousPage(currentPage);
                 var (html, chattyPage) =
-                    previousPage != null
-                    ? await _chattyParser.GetChattyPage(stopwatch, currentPage, previousPage.Html, previousPage.ChattyPage)
-                    : await _chattyParser.GetChattyPage(stopwatch, currentPage);
+                    currentPage <= 3
+                    ? firstThreePages[currentPage - 1]
+                    : await _chattyParser.GetChattyPage(stopwatch, currentPage, previousPage?.Html, previousPage?.ChattyPage);
                 newPages.Add(new ScrapeState.Page { Html = html, ChattyPage = chattyPage });
                 lastPage = chattyPage.LastPage;
 
@@ -327,23 +340,23 @@ namespace SimpleChattyServer.Services
                 if (thread.Posts.Any(x => x.Body == null))
                     threadIdsWithMissingPostBodies.Add(thread.ThreadId);
 
-            await ParallelAsync.ForEach(threadIdsWithMissingPostBodies, 4, async threadId =>
-            {
-                foreach (var postBody in await _threadParser.GetThreadBodies(threadId))
-                    SetBody(postBody);
-            });
-
-            void SetBody(ChattyPost postBody)
-            {
-                if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
+            await Parallel.ForEachAsync(
+                threadIdsWithMissingPostBodies,
+                new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                async (threadId, cancel) =>
                 {
-                    newChattyPost.Body = postBody.Body;
-                    newChattyPost.Date = postBody.Date;
-                    newChattyPost.AuthorId = postBody.AuthorId;
-                    newChattyPost.AuthorFlair = postBody.AuthorFlair;
-                    newChattyPost.IsFrozen = postBody.IsFrozen;
-                }
-            }
+                    foreach (var postBody in await _threadParser.GetThreadBodies(threadId))
+                    {
+                        if (newChatty.PostsById.TryGetValue(postBody.Id, out var newChattyPost))
+                        {
+                            newChattyPost.Body = postBody.Body;
+                            newChattyPost.Date = postBody.Date;
+                            newChattyPost.AuthorId = postBody.AuthorId;
+                            newChattyPost.AuthorFlair = postBody.AuthorFlair;
+                            newChattyPost.IsFrozen = postBody.IsFrozen;
+                        }
+                    }
+                });
         }
 
         private void RemovePostsWithNoBody(Chatty chatty)
