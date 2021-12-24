@@ -105,7 +105,7 @@ namespace SimpleChattyServer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to read file \"{filePath}\".}");
+                _logger.LogError(ex, "Failed to read file \"{FilePath}\".", filePath);
             }
 
             var messagePage = await _messageParser.GetMessagePage(
