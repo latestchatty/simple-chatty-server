@@ -118,6 +118,7 @@ namespace SimpleChattyServer.Services
                     CookieContainer = new(),
                     AllowAutoRedirect = true,
                     AutomaticDecompression = DecompressionMethods.GZip,
+                    MaxConnectionsPerServer = 32,
                 },
                 disposeHandler: true)
             {
