@@ -231,10 +231,13 @@ namespace SimpleChattyServer.Services
             stopwatch.Step("First three pages");
             var firstThreePageTasks =
                 Enumerable.Range(1, 3)
-                .Select(x =>
+                .Select(async x =>
                 {
                     var prev = GetPreviousPage(x);
-                    return _chattyParser.GetChattyPage(null, x, prev?.Html, prev?.ChattyPage);
+                    StepStopwatch pageStopwatch = new();
+                    var page = await _chattyParser.GetChattyPage(pageStopwatch, x, prev?.Html, prev?.ChattyPage);
+                    _logger.LogInformation("Scrape page {Page}: {Stopwatch}", x, pageStopwatch);
+                    return page;
                 })
                 .ToList();
             await Task.WhenAll(firstThreePageTasks);
