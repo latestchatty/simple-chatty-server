@@ -279,34 +279,31 @@ namespace SimpleChattyServer.Controllers
         [HttpGet("waitForEvent")]
         public async Task<WaitForEventResponse> WaitForEvent(int lastEventId)
         {
-            var stopwatch = Stopwatch.StartNew();
-            var maxTime = TimeSpan.FromMinutes(1);
-            var pollInterval = TimeSpan.FromSeconds(5);
+            // If there are events immediately available then return them, otherwise wait for 5 seconds and invite the
+            // client to call again.
+            var events = await _eventProvider.GetEvents(lastEventId);
 
-            while (stopwatch.Elapsed < maxTime)
+            if (events == null)
             {
-                var events = await _eventProvider.GetEvents(lastEventId);
-                if (events == null)
+                return new WaitForEventResponse
                 {
-                    return new WaitForEventResponse
-                    {
-                        LastEventId = await _eventProvider.GetLastEventId(),
-                        Events = new List<EventModel>(),
-                        TooManyEvents = true
-                    };
-                }
-                if (events.Count > 0)
-                {
-                    return new WaitForEventResponse
-                    {
-                        LastEventId = events.Last().EventId,
-                        Events = events
-                    };
-                }
-
-                await Task.Delay(pollInterval);
+                    LastEventId = await _eventProvider.GetLastEventId(),
+                    Events = new List<EventModel>(),
+                    TooManyEvents = true
+                };
             }
 
+            if (events.Count > 0)
+            {
+                return new WaitForEventResponse
+                {
+                    LastEventId = events.Last().EventId,
+                    Events = events
+                };
+            }
+
+            // Please come again.
+            await Task.Delay(TimeSpan.FromSeconds(5));
             return new WaitForEventResponse
             {
                 LastEventId = lastEventId,
