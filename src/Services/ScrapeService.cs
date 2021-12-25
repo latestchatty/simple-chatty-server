@@ -116,16 +116,24 @@ namespace SimpleChattyServer.Services
 
         private async Task ScrapeLoop(CancellationToken cancel)
         {
+            var stopwatch = Stopwatch.StartNew();
+
             while (!cancel.IsCancellationRequested)
             {
-                var elapsed = await Scrape();
+                var nextRun = stopwatch.Elapsed.Add(TimeSpan.FromSeconds(5));
+                
+                await Scrape();
 
-                try
+                var now = stopwatch.Elapsed;
+                if (now < nextRun)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancel);
-                }
-                catch (OperationCanceledException)
-                {
+                    try
+                    {
+                        await Task.Delay(nextRun - now, cancel);
+                    }
+                    catch
+                    {
+                    }
                 }
             }
         }
