@@ -31,7 +31,7 @@ aws s3 cp s3://simple-chatty-server/SimpleChattyServer.gz /opt/simple-chatty-ser
 gunzip /opt/simple-chatty-server/SimpleChattyServer.gz && \
 chmod +x /opt/simple-chatty-server/SimpleChattyServer && \
 systemctl start simple-chatty-server.service && \
-journalctl -f | grep Scrape
+journalctl -f | grep -v GET
 ```
 
 If that blows up, roll back to the previous version:
