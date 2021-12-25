@@ -233,19 +233,15 @@ namespace SimpleChattyServer.Services
 
             // The chatty almost always has three or fewer pages, so try downloading the first three in parallel for speed.
             stopwatch.Step("First three pages");
-            var firstThreePageTasks =
-                Enumerable.Range(1, 3)
-                .Select(async x =>
-                {
-                    var prev = GetPreviousPage(x);
-                    StepStopwatch pageStopwatch = new();
-                    var page = await _chattyParser.GetChattyPage(pageStopwatch, x, prev?.Html, prev?.ChattyPage);
-                    _logger.LogInformation("Scrape page {Page}: {Stopwatch}", x, pageStopwatch);
-                    return page;
-                })
-                .ToList();
-            await Task.WhenAll(firstThreePageTasks);
-            var firstThreePages = firstThreePageTasks.Select(x => x.GetAwaiter().GetResult()).ToList();
+            var firstThreePages = new (string Html, ChattyPage Page)[3];
+            await Parallel.ForEachAsync(Enumerable.Range(1, 3), async (x, cancel) =>
+            {
+                var prev = GetPreviousPage(x);
+                StepStopwatch pageStopwatch = new();
+                var page = await _chattyParser.GetChattyPage(pageStopwatch, x, prev?.Html, prev?.ChattyPage);
+                _logger.LogInformation("Scrape page {Page}: {Stopwatch}", x, pageStopwatch);
+                firstThreePages[x - 1] = page;
+            });
 
             while (currentPage <= lastPage)
             {
