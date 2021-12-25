@@ -120,16 +120,9 @@ namespace SimpleChattyServer.Services
             {
                 var elapsed = await Scrape();
 
-                double delay = 5;
-                
-                // conserve cpu usage at night when nothing is happening
-                var utcNow = DateTime.UtcNow;
-                if (utcNow.Hour >= 7 && utcNow.Hour < 12)
-                    delay = 15;
-
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(delay), cancel);
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancel);
                 }
                 catch (OperationCanceledException)
                 {
