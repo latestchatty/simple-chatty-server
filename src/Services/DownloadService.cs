@@ -12,6 +12,14 @@ using SimpleChattyServer.Exceptions;
 
 namespace SimpleChattyServer.Services
 {
+    public static class QueryExtensions
+    {
+        public static void Add(this List<KeyValuePair<string, string>> self, string key, string value)
+        {
+            self.Add(new(key, value));
+        }
+    }
+
     public sealed class DownloadService : IDisposable
     {
         private readonly HttpClient _anonymousHttpClient = CreateHttpClient(timeout: 30);
@@ -30,7 +38,7 @@ namespace SimpleChattyServer.Services
         }
 
         public async Task<string> DownloadWithSharedLogin(string url, bool verifyLoginStatus = true,
-            Dictionary<string, string> postBody = null)
+            IEnumerable<KeyValuePair<string, string>> postBody = null)
         {
             var html = await _sharedLoginLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
                 DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody));
@@ -60,7 +68,7 @@ namespace SimpleChattyServer.Services
 
         public async Task<string> DownloadWithUserLogin(
             string url, string username, string password,
-            Dictionary<string, string> postBody = null)
+            IEnumerable<KeyValuePair<string, string>> postBody = null)
         {
             using var client = CreateHttpClient(timeout: 30);
             await LogIn(username, password, client);
@@ -72,7 +80,7 @@ namespace SimpleChattyServer.Services
             return await response.Content.ReadAsStringAsync();
         }
 
-        public async Task<string> DownloadAnonymous(string url, Dictionary<string, string> postBody = null)
+        public async Task<string> DownloadAnonymous(string url, IEnumerable<KeyValuePair<string, string>> postBody = null)
         {
             using var request = CreateRequest(url, method: postBody == null ? HttpMethod.Get : HttpMethod.Post,
                 requestBody: postBody);
@@ -80,7 +88,7 @@ namespace SimpleChattyServer.Services
             return await response.Content.ReadAsStringAsync();
         }
 
-        public Dictionary<string, string> NewQuery() => new();
+        public List<KeyValuePair<string, string>> NewQuery() => new();
 
         // Caller must dispose the returned client.
         private static HttpClient CreateHttpClient(int timeout) =>
@@ -99,7 +107,7 @@ namespace SimpleChattyServer.Services
         // Caller must dispose the returned message.
         private static HttpRequestMessage CreateRequest(
             string url, string requestedWith = "libcurl", HttpMethod method = null,
-            Dictionary<string, string> requestBody = null)
+            IEnumerable<KeyValuePair<string, string>> requestBody = null)
         {
             method ??= HttpMethod.Get;
 
@@ -114,7 +122,7 @@ namespace SimpleChattyServer.Services
         }
 
         private async Task<string> DownloadWithExistingSharedLoginCookies(string url, bool verifyLoginStatus,
-            Dictionary<string, string> postBody)
+            IEnumerable<KeyValuePair<string, string>> postBody)
         {
             using var request = CreateRequest(url, method: postBody == null ? HttpMethod.Get : HttpMethod.Post,
                 requestBody: postBody);
