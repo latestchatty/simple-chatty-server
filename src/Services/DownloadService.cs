@@ -22,9 +22,10 @@ namespace SimpleChattyServer.Services
 
     public sealed class DownloadService : IDisposable
     {
-        private readonly HttpClient _anonymousHttpClient = CreateHttpClient(timeout: 30);
-        private readonly HttpClient _sharedHttpClient = CreateHttpClient(timeout: 30);
-        private readonly LoggedReaderWriterLock _sharedLoginLock;
+        private HttpClient _anonymousHttpClient = CreateHttpClient();
+        private readonly LoggedReaderWriterLock _anonymousHttpClientLock;
+        private HttpClient _sharedHttpClient = CreateHttpClient();
+        private readonly LoggedReaderWriterLock _sharedHttpClientLock;
         private readonly SharedLoginOptions _sharedLoginOptions;
         private readonly Encoding _utf8Encoding;
 
@@ -32,20 +33,36 @@ namespace SimpleChattyServer.Services
             ILogger<DownloadService> logger,
             IOptions<SharedLoginOptions> sharedLoginOptions)
         {
-            _sharedLoginLock = new("Shared login", x => logger.LogDebug(x));
+            _anonymousHttpClientLock = new("Anonymous HttpClient", x => logger.LogDebug(x));
+            _sharedHttpClientLock = new("Shared HttpClient", x => logger.LogDebug(x));
             _sharedLoginOptions = sharedLoginOptions.Value;
             _utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+        }
+
+        public async Task CycleSharedHttpClients()
+        {
+            await _anonymousHttpClientLock.WithWriteLock(nameof(CycleSharedHttpClients), () =>
+            {
+                _anonymousHttpClient.Dispose();
+                _anonymousHttpClient = CreateHttpClient();
+            });
+
+            await _sharedHttpClientLock.WithWriteLock(nameof(CycleSharedHttpClients), () =>
+            {
+                _sharedHttpClient.Dispose();
+                _sharedHttpClient = CreateHttpClient();
+            });
         }
 
         public async Task<string> DownloadWithSharedLogin(string url, bool verifyLoginStatus = true,
             IEnumerable<KeyValuePair<string, string>> postBody = null)
         {
-            var html = await _sharedLoginLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
+            var html = await _sharedHttpClientLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
                 DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody));
             if (html != null)
                 return html;
 
-            await _sharedLoginLock.WithWriteLock(nameof(DownloadWithSharedLogin), async () =>
+            await _sharedHttpClientLock.WithWriteLock(nameof(DownloadWithSharedLogin), async () =>
             {
                 // Another concurrent task might have successfully logged in while we were waiting for the lock, so
                 // let's try it one more time without logging in.
@@ -57,7 +74,7 @@ namespace SimpleChattyServer.Services
                 await LogIntoSharedAccount();
             });
 
-            html = await _sharedLoginLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
+            html = await _sharedHttpClientLock.WithReadLock(nameof(DownloadWithSharedLogin), () =>
                 DownloadWithExistingSharedLoginCookies(url, verifyLoginStatus, postBody));
             if (html != null)
                 return html;
@@ -70,7 +87,7 @@ namespace SimpleChattyServer.Services
             string url, string username, string password,
             IEnumerable<KeyValuePair<string, string>> postBody = null)
         {
-            using var client = CreateHttpClient(timeout: 30);
+            using var client = CreateHttpClient();
             await LogIn(username, password, client);
             using var request = CreateRequest(
                 url,
@@ -84,14 +101,17 @@ namespace SimpleChattyServer.Services
         {
             using var request = CreateRequest(url, method: postBody == null ? HttpMethod.Get : HttpMethod.Post,
                 requestBody: postBody);
-            using var response = await _anonymousHttpClient.SendAsync(request);
-            return await response.Content.ReadAsStringAsync();
+            return await _anonymousHttpClientLock.WithReadLock(nameof(DownloadAnonymous), async () =>
+            {
+                using var response = await _anonymousHttpClient.SendAsync(request);
+                return await response.Content.ReadAsStringAsync();
+            });
         }
 
         public List<KeyValuePair<string, string>> NewQuery() => new();
 
         // Caller must dispose the returned client.
-        private static HttpClient CreateHttpClient(int timeout) =>
+        private static HttpClient CreateHttpClient() =>
             new(
                 handler: new HttpClientHandler()
                 {
@@ -101,7 +121,7 @@ namespace SimpleChattyServer.Services
                 },
                 disposeHandler: true)
             {
-                Timeout = TimeSpan.FromSeconds(timeout),
+                Timeout = TimeSpan.FromSeconds(30),
             };
 
         // Caller must dispose the returned message.
@@ -121,6 +141,7 @@ namespace SimpleChattyServer.Services
             return request;
         }
 
+        // Caller must hold shared HttpClient lock
         private async Task<string> DownloadWithExistingSharedLoginCookies(string url, bool verifyLoginStatus,
             IEnumerable<KeyValuePair<string, string>> postBody)
         {
@@ -135,6 +156,7 @@ namespace SimpleChattyServer.Services
                 return null; // nope, we're not logged in
         }
 
+        // Caller must hold shared HttpClient lock
         private Task LogIntoSharedAccount() =>
             LogIn(
                 _sharedLoginOptions.Username,

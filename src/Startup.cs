@@ -54,6 +54,7 @@ namespace SimpleChattyServer
             services.AddSingleton<CortexParser>();
             services.AddHostedService<DukeNukedService>();
             services.AddHostedService<ScrapeService>();
+            services.AddHostedService<HttpClientCycleService>();
             services.AddControllers(
                 options => options.Filters.Add(new HttpResponseExceptionFilter()))
                 .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
