@@ -8,9 +8,8 @@ using SimpleChattyServer.Exceptions;
 using SimpleChattyServer.Data.Requests;
 using SimpleChattyServer.Data.Responses;
 using SimpleChattyServer.Services;
-using System.Diagnostics;
-using Microsoft.AspNetCore.Http;
-using System.Web;
+using Nito.AsyncEx;
+using System.Threading;
 
 namespace SimpleChattyServer.Controllers
 {
@@ -26,6 +25,7 @@ namespace SimpleChattyServer.Controllers
         private readonly UserParser _userParser;
         private readonly CortexParser _cortexParser;
         private readonly DownloadService _downloadService;
+        private readonly AsyncMonitor _shacknewsOnDemandRequestLock = new();
 
         public V2Controller(ChattyProvider chattyProvider, SearchParser searchParser, EventProvider eventProvider,
             ChattyParser chattyParser, MessageParser messageParser, UserDataProvider userDataProvider,
@@ -368,6 +368,11 @@ namespace SimpleChattyServer.Controllers
         [HttpPost("getMessages")]
         public async Task<GetMessagesResponse> GetMessages([FromForm] GetMessagesRequest request)
         {
+            // This requires us to make an on-demand call to Shacknews. Let's limit these to one at a time.
+            using CancellationTokenSource cts = new();
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+            using var heldLock = await _shacknewsOnDemandRequestLock.EnterAsync(cts.Token);
+
             var mailbox = MailboxConverter.Parse(request.Folder);
             var messagePage = await _messageParser.GetMessagePage(
                 mailbox, request.Username, request.Password, request.Page);
@@ -383,6 +388,11 @@ namespace SimpleChattyServer.Controllers
         [HttpPost("getMessageCount")]
         public async Task<GetMessageCountResponse> GetMessageCount([FromForm] GetMessageCountRequest request)
         {
+            // This requires us to make an on-demand call to Shacknews. Let's limit these to one at a time.
+            using CancellationTokenSource cts = new();
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+            using var heldLock = await _shacknewsOnDemandRequestLock.EnterAsync(cts.Token);
+
             var messagePage = await _messageParser.GetMessagePage(
                 Mailbox.Inbox, request.Username, request.Password, 1);
             return new GetMessageCountResponse
@@ -598,6 +608,11 @@ namespace SimpleChattyServer.Controllers
         [HttpGet("getCortexUser")]
         public async Task<GetCortexUserResponse> GetCortexUser(string userName)
         {
+            // This requires us to make an on-demand call to Shacknews. Let's limit these to one at a time.
+            using CancellationTokenSource cts = new();
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+            using var heldLock = await _shacknewsOnDemandRequestLock.EnterAsync(cts.Token);
+
             return new GetCortexUserResponse() { UserData = await _cortexParser.GetCortexUserData(userName) };
         }
 
