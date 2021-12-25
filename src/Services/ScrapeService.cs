@@ -145,6 +145,9 @@ namespace SimpleChattyServer.Services
             {
                 var oldEventId = await _eventProvider.GetLastEventId();
 
+                stopwatch.Step(nameof(GC));
+                GC.Collect();
+
                 stopwatch.Step(nameof(_lolParser.DownloadChattyLolCounts));
                 var lolTask = _lolParser.DownloadChattyLolCounts(_state?.LolJson, _state?.LolCounts);
 
