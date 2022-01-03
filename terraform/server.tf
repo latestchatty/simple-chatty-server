@@ -15,7 +15,7 @@ data "aws_ami" "latest_ubuntu" {
 
 resource "aws_instance" "simple_chatty_server" {
   ami = data.aws_ami.latest_ubuntu.id
-  instance_type = "t4g.small"
+  instance_type = "t4g.micro"
   disable_api_termination = false
   instance_initiated_shutdown_behavior = "stop"
   monitoring = false
