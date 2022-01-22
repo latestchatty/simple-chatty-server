@@ -71,12 +71,16 @@ namespace SimpleChattyServer.Services
                 var messagePage = await _messageParser.GetMessagePage(
                     Mailbox.Inbox, _dukeNukedOptions.Username, _dukeNukedOptions.Password, 1);
                 var newLastMessageId = GetLastMessageId(messagePage);
-                await WriteLastMessageId(newLastMessageId);
-                foreach (var newMessage in messagePage.Messages.Where(x => x.Id > lastMessageId))
+                foreach (var newMessage in messagePage.Messages
+                    .Where(x => x.Id > lastMessageId).OrderBy(x => x.Date))
                 {
                     await _messageParser.MarkMessageAsRead(
                         _dukeNukedOptions.Username, _dukeNukedOptions.Password, newMessage.Id);
-                    await SendMessageNotification(newMessage);
+                    if (!await SendMessageNotification(newMessage)) {
+                        break;
+                    }
+                    await WriteLastMessageId(newMessage.Id);
+                    await Task.Delay(TimeSpan.FromSeconds(5));
                 }
                 _logger.LogInformation($"DukeNuked complete.");
             }
@@ -119,26 +123,33 @@ namespace SimpleChattyServer.Services
             await File.WriteAllTextAsync(filePath, $"{id}");
         }
 
-        private async Task SendMessageNotification(MessageModel newMessage)
+        private async Task<bool> SendMessageNotification(MessageModel newMessage)
         {
             var postBody =
-                "From: " + newMessage.From + "\r\n" +
-                "Subject: " + newMessage.Subject + "\r\n\r\n" +
+                $"From: {newMessage.From}\r\n" +
+                $"Date: {newMessage.Date}\r\n" +
+                $"Subject: {newMessage.Subject}\r\n\r\n" +
                 _stripTagsRegex.Replace(newMessage.Body, "");
 
             var query = _downloadService.NewQuery();
             query.Add("token", _dukeNukedOptions.SlackToken);
             query.Add("channel", "#duke-nuked");
             query.Add("text", postBody);
-            query.Add("username", "duke nuked");
-            query.Add("parse", "none");
-            query.Add("link_names", "0");
+            query.Add("link_names", "false");
+            query.Add("unfurl_links", "false");
+            query.Add("unfurl_media", "false");
+            query.Add("mrkdwn", "false");
 
-            var result = await _downloadService.DownloadWithSharedLogin(
-                "https://slack.com/api/chat.postMessage?" + query.ToString(),
-                verifyLoginStatus: false);
+            var result = await _downloadService.DownloadAnonymous(
+                "https://slack.com/api/chat.postMessage", query);
 
-            _logger.LogInformation("Slack result: " + result);
+            if (result.Contains("\"ok\":false")) {
+                _logger.LogError("Slack API returned error: {Result}", result);
+                return false;
+            } else {
+                _logger.LogInformation("Slack result: {Result}", result);
+                return true;
+            }
         }
     }
 }
