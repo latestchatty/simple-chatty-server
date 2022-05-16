@@ -28,7 +28,7 @@ namespace SimpleChattyServer.Services
             var parser = new Parser(page);
             var userData = new CortexUserData();
             userData.UserId = userId;
-            userData.Username = parser.Clip(new string[] { "<span class=\"user-name\"", ">" }, "</span>");
+            userData.Username = parser.Clip(new string[] { "<h1 class=\"user-name\"", ">" }, "</h1>");
             //Order matters, because we're lazy here.
             userData.Points = int.Parse(parser.Clip(new string[] { "<span class=\"stat-number\"", ">" }, "</span>"), NumberStyles.Any);
             userData.Comments = int.Parse(parser.Clip(new string[] { "<span class=\"stat-number\"", ">" }, "</span>"), NumberStyles.Any);
