@@ -504,8 +504,8 @@ namespace SimpleChattyServer.Controllers
         {
             if (request.Client.Length > 50)
                 throw new Api400Exception("Parameter \"client\" must be at most 50 characters.");
-            if (request.Data.Length > 100000)
-                throw new Api400Exception("Parameter \"data\" must be at most 100,000 characters.");
+            if (request.Data.Length > 125000)
+                throw new Api400Exception("Parameter \"data\" must be at most 125,000 characters.");
             await _userDataProvider.UpdateUserData(request.Username,
                 userData => userData.ClientData[request.Client] = request.Data);
             return new SuccessResponse();
