@@ -87,7 +87,7 @@ namespace SimpleChattyServer.Services
                 return Cortex.DetectCortexThread(await _threadParser.GetThreadTree(postId));
         }
 
-        public async Task Post(string username, string password, int parentId, string body)
+        public async Task<PostModel> Post(string username, string password, int parentId, string body)
         {
             if (body.Length > 0 && body[0] == '@')
                 body = " " + body;
@@ -146,12 +146,13 @@ namespace SimpleChattyServer.Services
                     {
                         var eventData = (NewPostEventDataModel)ev.EventData;
                         if (eventData.Post.Author.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                            return;
+                            return eventData.Post;
                     }
                     lastEventId = ev.EventId;
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
+            return null;
         }
 
         public async Task SetPostCategory(string username, string password, int postId, ModerationFlag category)
