@@ -288,7 +288,7 @@ namespace SimpleChattyServer.Services
                 {
                     if (await _threadParser.DoesThreadExist(threadId))
                     {
-                        if (DateTimeOffset.Now - oldThread.Posts[0].Date > TimeSpan.FromHours(18))
+                        if (DateTimeOffset.Now - oldThread.Posts[0].Date > TimeSpan.FromHours(24))
                             newChatty.ExpiredThreadIds.Add(threadId);
                         else
                             newChatty.Threads.Add(oldThread);
