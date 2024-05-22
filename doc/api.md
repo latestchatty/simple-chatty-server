@@ -438,7 +438,7 @@ Response:
 ```
 
 ### POST /v2/postComment
-Posts a new comment. If you're lucky, the new post will be returned in the response, but even when nothing is wrong it may still be null. If it's null you'll have to wait for the new post event to appear in the event stream.
+Posts a new comment.
 
 Parameters:
 - `username=[STR]` - Username.
@@ -449,8 +449,7 @@ Parameters:
 Response:
 ```
 {
-   "result": "success",
-   "post": [POST?]
+   "result": "success"
 }
 ```
 
