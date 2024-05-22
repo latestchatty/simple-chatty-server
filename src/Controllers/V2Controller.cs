@@ -187,10 +187,10 @@ namespace SimpleChattyServer.Controllers
         }
 
         [HttpPost("postComment")]
-        public async Task<PostCommentResponse> PostComment([FromForm] PostCommentRequest request)
+        public async Task<SuccessResponse> PostComment([FromForm] PostCommentRequest request)
         {
-            var result = await _chattyProvider.Post(request.Username, request.Password, request.ParentId, request.Text);
-            return new PostCommentResponse {Post = result};
+            await _chattyProvider.Post(request.Username, request.Password, request.ParentId, request.Text);
+            return new SuccessResponse();
         }
 
         [HttpGet("search")]
