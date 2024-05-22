@@ -4,12 +4,15 @@ This service powers `winchatty.com`. [View the API documentation](https://github
 
 ## Development
 
+- Use the VSCode devcontainer.
 - Edit `src/appsettings.json` and fill in, at minimum, the `SharedLogin` and `Storage` sections.
 - In the `build` directory, run `./debug.sh`.
 
 ## Deployment
 
 - Set the production `appsettings.json` text in Parameter Store in the key `/SimpleChattyServer/config`.
+- Install AWSCLI. `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install`
+- Add AWS credentials. `mkdir ~/.aws && cat > ~/.aws/credentials`
 - In the `build` directory, run `./clean.sh && ./publish.sh && ./upload.sh`.
 - In the `terraform` directory, run `terraform taint aws_instance.simple_chatty_server && terraform apply`.
 
