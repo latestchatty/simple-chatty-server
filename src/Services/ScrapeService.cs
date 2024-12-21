@@ -181,6 +181,8 @@ namespace SimpleChattyServer.Services
                 stopwatch.Step(nameof(FixRelativeLinks));
                 FixRelativeLinks(newChatty);
 
+                AddDiscordPost(newChatty);
+
                 stopwatch.Step(nameof(_chattyProvider.Update));
                 var (lolJson, lolCounts) = await lolTask;
                 await _eventProvider.Update(newChatty, lolCounts);
@@ -214,6 +216,35 @@ namespace SimpleChattyServer.Services
             }
 
             return stopwatch.Elapsed;
+        }
+
+        private static void AddDiscordPost(Chatty newChatty)
+        {
+            var id = 99999999;
+
+            ChattyPost chattyPost = new()
+            {
+                Author = "John Q. Chatty",
+                AuthorFlair = new() { IsTenYear = true, IsTwentyYear = true, },
+                AuthorId = 0,
+                Body = "<b>Join the Chatty@Home community Discord!</b><br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>",
+                Category = ModerationFlag.Informative,
+                Date = DateTimeOffset.Now.AddDays(1),
+                Depth = 0,
+                Id = id,
+                IsCortex = false,
+                IsFrozen = true,
+            };
+
+            ChattyThread chattyThread = new()
+            {
+                Posts = new() { chattyPost },
+            };
+
+            newChatty.PostsById[id] = chattyPost;
+            newChatty.Threads.Insert(0, chattyThread);
+            newChatty.ThreadsByReplyId[id] = chattyThread;
+            newChatty.ThreadsByRootId[id] = chattyThread;
         }
 
         private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
