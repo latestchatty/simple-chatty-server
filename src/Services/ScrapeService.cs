@@ -224,10 +224,21 @@ namespace SimpleChattyServer.Services
 
             ChattyPost chattyPost = new()
             {
-                Author = "John Q. Chatty",
+                Author = "electroly",
                 AuthorFlair = new() { IsTenYear = true, IsTwentyYear = true, },
-                AuthorId = 0,
-                Body = "<b>The Road Ahead for Shacknews Chatty <br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty\">https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty</a></b><br /><br /><br /><b>Join the Chatty@Home community Discord!</b><br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>",
+                AuthorId = 172215,
+                Body =
+                    "Dear friends and fellow shackers,<br /><br />" +
+                    "The time has come for us to leave Shacknews. " +
+                    "In response to the owner's announcement [0], we are reforming the community on Discord. " +
+                    "I am asking you to join us on the <b>Chatty@Home Discord</b> at <a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>.<br /><br />" +
+                    "If you haven't used Discord before, we will help you. " +
+                    "We have a great number of shackers already, and we're waiting for you. " +
+                    "Please join us.<br /><br />" +
+                    "The chatty apps will stop working in the coming weeks. I hope to see you on Discord.<br /><br />" +
+                    "Love,<br />" +
+                    "electroly<br /><br />" +
+                    "[0] <a target=\"_blank\" rel=\"nofollow\" href=\"https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty\">https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty</a>",
                 Category = ModerationFlag.Informative,
                 Date = DateTimeOffset.Now.AddDays(1),
                 Depth = 0,
