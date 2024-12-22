@@ -36,7 +36,6 @@ namespace SimpleChattyServer
             services.AddCors(
                 cors => cors.AddDefaultPolicy(
                     builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
-            services.Configure<DukeNukedOptions>(Configuration.GetSection(DukeNukedOptions.SectionName));
             services.Configure<SharedLoginOptions>(Configuration.GetSection(SharedLoginOptions.SectionName));
             services.Configure<StorageOptions>(storageSection);
             services.AddSingleton<ChattyProvider>();
@@ -52,7 +51,6 @@ namespace SimpleChattyServer
             services.AddSingleton<UserDataProvider>();
             services.AddSingleton<UserParser>();
             services.AddSingleton<CortexParser>();
-            services.AddHostedService<DukeNukedService>();
             services.AddHostedService<ScrapeService>();
             services.AddHostedService<HttpClientCycleService>();
             services.AddControllers(
