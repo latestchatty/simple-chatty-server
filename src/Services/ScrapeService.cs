@@ -227,7 +227,7 @@ namespace SimpleChattyServer.Services
                 Author = "John Q. Chatty",
                 AuthorFlair = new() { IsTenYear = true, IsTwentyYear = true, },
                 AuthorId = 0,
-                Body = "<b>Join the Chatty@Home community Discord!</b><br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>",
+                Body = "<b>The Road Ahead for Shacknews Chatty <br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty\">https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty</a></b><br /><br /><br /><b>Join the Chatty@Home community Discord!</b><br /><br /><a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>",
                 Category = ModerationFlag.Informative,
                 Date = DateTimeOffset.Now.AddDays(1),
                 Depth = 0,
