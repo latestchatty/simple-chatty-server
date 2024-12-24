@@ -220,42 +220,33 @@ namespace SimpleChattyServer.Services
 
         private static void AddDiscordPost(Chatty newChatty)
         {
-            var id = 99999999;
+            // For emergency use only! This pins a post to the top of the chatty.
 
-            ChattyPost chattyPost = new()
-            {
-                Author = "electroly",
-                AuthorFlair = new() { IsTenYear = true, IsTwentyYear = true, },
-                AuthorId = 172215,
-                Body =
-                    "Dear friends and fellow shackers,<br /><br />" +
-                    "The time has come for us to leave Shacknews. " +
-                    "In response to the owner's announcement [0], we are reforming the community on Discord. " +
-                    "I am asking you to join us on the <b>Chatty@Home Discord</b> at <a target=\"_blank\" rel=\"nofollow\" href=\"https://discord.gg/thechatty\">https://discord.gg/thechatty</a>.<br /><br />" +
-                    "If you haven't used Discord before, we will help you. " +
-                    "We have a great number of shackers already, and we're waiting for you. " +
-                    "Please join us.<br /><br />" +
-                    "The chatty apps will stop working in the coming weeks. I hope to see you on Discord.<br /><br />" +
-                    "Love,<br />" +
-                    "electroly<br /><br />" +
-                    "[0] <a target=\"_blank\" rel=\"nofollow\" href=\"https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty\">https://www.shacknews.com/cortex/article/5691/the-road-ahead-for-shacknews-chatty</a>",
-                Category = ModerationFlag.Informative,
-                Date = DateTimeOffset.Now.AddDays(1),
-                Depth = 0,
-                Id = id,
-                IsCortex = false,
-                IsFrozen = true,
-            };
+            // var id = 99999999;
 
-            ChattyThread chattyThread = new()
-            {
-                Posts = new() { chattyPost },
-            };
+            // ChattyPost chattyPost = new()
+            // {
+            //     Author = "electroly",
+            //     AuthorFlair = new() { IsTenYear = true, IsTwentyYear = true, },
+            //     AuthorId = 172215,
+            //     Body = "Emergency pinned post body goes here",
+            //     Category = ModerationFlag.Informative,
+            //     Date = DateTimeOffset.Now.AddDays(1),
+            //     Depth = 0,
+            //     Id = id,
+            //     IsCortex = false,
+            //     IsFrozen = true,
+            // };
 
-            newChatty.PostsById[id] = chattyPost;
-            newChatty.Threads.Insert(0, chattyThread);
-            newChatty.ThreadsByReplyId[id] = chattyThread;
-            newChatty.ThreadsByRootId[id] = chattyThread;
+            // ChattyThread chattyThread = new()
+            // {
+            //     Posts = new() { chattyPost },
+            // };
+
+            // newChatty.PostsById[id] = chattyPost;
+            // newChatty.Threads.Insert(0, chattyThread);
+            // newChatty.ThreadsByReplyId[id] = chattyThread;
+            // newChatty.ThreadsByRootId[id] = chattyThread;
         }
 
         private async Task<(List<ScrapeState.Page> Pages, Chatty Chatty)> GetChattyWithoutBodies(
